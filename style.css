@@ -1,4 +1,4 @@
-/* 👾 1. 픽셀 폰트 (둥근모꼴) 불러오기 */
+/* 👾 1. 폰트: 둥근모꼴 (필수!) */
 @font-face {
     font-family: 'DungGeunMo';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
@@ -6,122 +6,148 @@
     font-style: normal;
 }
 
-/* 🎨 2. 전체 분위기 설정 (Y2K 모눈종이) */
 body {
-    font-family: 'DungGeunMo', sans-serif; /* 모든 글씨체 변경 */
-    background-color: #E6E6FA; /* 연보라색 베이스 */
+    font-family: 'DungGeunMo', sans-serif;
+    background-color: #F2F2F2; /* 요청하신 배경색 */
     background-image: 
-        linear-gradient(rgba(88, 88, 180, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(88, 88, 180, 0.1) 1px, transparent 1px);
-    background-size: 20px 20px; /* 격자 무늬 */
-    color: #4a4a4a;
-    overflow: hidden; /* 스크롤바 못생기게 나오는 것 방지 */
+        linear-gradient(#e0e0e0 1px, transparent 1px),
+        linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
+    background-size: 20px 20px; /* 모눈 패턴 */
+    color: #1a1a1a;
+    overflow: hidden;
 }
 
-/* 🖱️ 커서도 귀엽게 (선택사항) */
-body, button, input, select {
+/* 🖱️ 커서 */
+body, button, input, select, label {
     cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewport='0 0 20 20' fill='black'><text y='18' font-size='18'>👆</text></svg>"), auto;
 }
 
-/* 🪟 3. 메인 윈도우 창 (오른쪽 화면) */
-.main-window {
-    background: #ffffff;
-    border: 2px solid #4a4a4a;
-    box-shadow: 8px 8px 0px rgba(74, 74, 74, 0.2); /* 픽셀 그림자 */
-    border-radius: 12px;
-    height: 100%;
-    overflow-y: auto;
-    position: relative;
-}
-
-/* 📂 4. 왼쪽 폴더 탭 디자인 */
+/* 🗂️ 왼쪽 폴더 탭 (일러스트 느낌) */
 .folder-tab {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 15px 20px;
+    gap: 10px;
+    padding: 12px 20px;
     margin-bottom: 12px;
-    background-color: #f0f0f0;
-    border: 2px solid #4a4a4a;
-    border-right: none; /* 오른쪽 선을 터서 연결된 느낌 */
-    border-radius: 12px 0 0 12px;
-    cursor: pointer;
+    background: #ffffff;
+    border: 3px solid #1a1a1a;
+    border-radius: 15px; /* 둥글게 */
+    box-shadow: 4px 4px 0px #1a1a1a; /* 하드 그림자 */
     transition: all 0.1s;
     font-size: 1.1rem;
     color: #888;
-    position: relative;
-    right: -2px; /* 메인 윈도우와 딱 붙게 */
+    width: 90%; /* 살짝 작게 */
 }
 
 .folder-tab:hover {
-    background-color: #ffe4e1; /* 호버시 연한 핑크 */
-    color: #4a4a4a;
-    transform: translateX(-5px); /* 살짝 튀어나옴 */
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px #1a1a1a;
+    color: #1a1a1a;
 }
 
 .folder-tab.active {
-    background-color: #ffffff;
-    color: #FF6B81; /* 활성화 포인트 컬러 */
+    background: #FF9FB2; /* 활성 탭: 분홍 */
+    color: #1a1a1a;
     font-weight: bold;
-    width: calc(100% + 4px); /* 오른쪽으로 더 길게 */
-    z-index: 10;
-    box-shadow: -4px 4px 0px rgba(0,0,0,0.05);
+    transform: translate(10px, 0); /* 오른쪽으로 튀어나옴 */
+    width: 100%; /* 메인 윈도우와 닿게 */
+    border-right: none;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: none;
+    z-index: 20;
 }
 
-/* 🍬 5. 픽셀 버튼 */
+/* 🖥️ 메인 윈도우 (오른쪽 큰 박스) */
+.main-window {
+    background: #ffffff;
+    border: 3px solid #1a1a1a;
+    border-radius: 20px;
+    box-shadow: 8px 8px 0px rgba(0,0,0,0.1);
+    height: 100%;
+    overflow-y: auto;
+    position: relative;
+    z-index: 10;
+}
+
+/* 📦 내부 컨텐츠 박스들 (차트, 등록창 등) */
+.pixel-box {
+    background: #ffffff;
+    border: 3px solid #1a1a1a;
+    border-radius: 12px;
+    box-shadow: 4px 4px 0px #ddd;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 💖 등록창 전용 스타일 (일러스트의 분홍 박스) */
+.register-box {
+    background: #FFE4E8; /* 연분홍 배경 */
+    border: 3px solid #1a1a1a;
+    border-radius: 12px;
+    box-shadow: 4px 4px 0px #FFB7C5; /* 그림자도 분홍 */
+}
+
+/* 🕹️ 입력창 & 버튼 */
+.pixel-input {
+    border: 2px solid #1a1a1a;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: 'DungGeunMo';
+    box-shadow: inset 2px 2px 0px #eee;
+    transition: 0.2s;
+}
+.pixel-input:focus {
+    outline: none;
+    background: #fff;
+    box-shadow: inset 2px 2px 0px #FF9FB2;
+}
+
 .pixel-btn {
-    background-color: #FFB7B2;
-    border: 2px solid #4a4a4a;
-    box-shadow: 4px 4px 0px #4a4a4a;
-    color: #4a4a4a;
-    transition: all 0.1s;
+    background: #1a1a1a;
+    color: white;
+    border: 2px solid #1a1a1a;
+    border-radius: 8px;
+    padding: 8px 20px;
+    box-shadow: 2px 2px 0px #888;
+    transition: 0.1s;
 }
 .pixel-btn:active {
     transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px #4a4a4a;
+    box-shadow: none;
+}
+.pixel-btn.primary {
+    background: #FF6B81;
+    border-color: #1a1a1a;
+    color: #1a1a1a;
+    box-shadow: 3px 3px 0px #1a1a1a;
+    font-weight: bold;
 }
 
-/* 📝 6. 입력창 (구형 윈도우 스타일) */
-.pixel-input {
-    border: 2px solid #4a4a4a;
-    background: #f8f9fa;
-    box-shadow: inset 2px 2px 0px #ddd;
-    border-radius: 8px;
-    font-family: 'DungGeunMo';
-}
-.pixel-input:focus {
-    background: #fff;
-    outline: none;
-    box-shadow: inset 2px 2px 0px #ffccd5;
-}
-
-/* 🌈 7. 스크롤바 (픽셀 스타일) */
-::-webkit-scrollbar { width: 16px; }
-::-webkit-scrollbar-track { background: #f0f0f0; border-left: 2px solid #4a4a4a; }
+/* 스크롤바 */
+::-webkit-scrollbar { width: 14px; }
+::-webkit-scrollbar-track { background: #f0f0f0; border-left: 2px solid #1a1a1a; }
 ::-webkit-scrollbar-thumb { 
-    background: #d8b4fe; 
-    border: 2px solid #4a4a4a;
-    box-shadow: inset 2px 2px 0px rgba(255,255,255,0.5);
+    background: #FF9FB2; 
+    border: 2px solid #1a1a1a;
+    border-radius: 10px;
 }
 
-/* ✨ 8. 애니메이션 */
-.fade-in { animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-@keyframes popIn { 
-    from { opacity: 0; transform: scale(0.95); } 
-    to { opacity: 1; transform: scale(1); } 
-}
+/* 애니메이션 */
+.fade-in { animation: popUp 0.3s ease-out; }
+@keyframes popUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* 필터 칩 */
 .filter-chip {
-    border: 2px solid #4a4a4a;
+    border: 2px solid #1a1a1a;
     background: white;
-    padding: 5px 15px;
-    border-radius: 50px;
-    font-size: 0.9rem;
-    transition: 0.1s;
+    padding: 4px 12px;
+    border-radius: 20px;
+    cursor: pointer;
 }
 .filter-chip.active {
-    background: #4a4a4a;
+    background: #1a1a1a;
     color: white;
-    box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+    box-shadow: 2px 2px 0px #FF9FB2;
 }
