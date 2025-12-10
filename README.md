@@ -1,2 +1,1 @@
-# Stop_Buy_Same
-찐
+# STOP_Bying_Same

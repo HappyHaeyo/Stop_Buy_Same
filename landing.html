@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Lip Collector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @font-face {
+            font-family: 'DungGeunMo';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #8890c1;
+            color: white;
+            font-family: 'DungGeunMo', 'Pretendard', sans-serif;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #8890c1; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.5); border-radius: 4px; }
+
+        /* ✨ 상단 윈도우 장식 바 (New!) */
+        .top-window-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 48px; /* 적당한 두께 */
+            background-color: #E0B3CA; /* 요청하신 분홍색 */
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* 양쪽 정렬 */
+            padding: 0 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-bottom: 2px solid rgba(255,255,255,0.4);
+        }
+
+        /* 윈도우 버튼 장식 (동그라미 3개) */
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .win-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: white;
+            opacity: 0.8;
+            box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        /* 오른쪽 장식 텍스트 */
+        .win-title {
+            font-size: 14px;
+            opacity: 0.8;
+            letter-spacing: 1px;
+        }
+
+        /* 배경 및 효과 (기존 유지) */
+        .bg-fixed-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.25) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.25) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .spotlight {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                circle 450px at var(--x, 50%) var(--y, 50%), 
+                rgba(255, 255, 255, 0.4) 0%,  
+                rgba(255, 230, 240, 0.1) 40%, 
+                transparent 70%
+            );
+            mix-blend-mode: overlay;
+        }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 메인 박스 (간격 수정됨!) */
+        .glass-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            padding: 3rem 4rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-top: 48px; /* 상단 바 높이만큼 살짝 내림 */
+        }
+        .glass-box:hover { transform: translateY(-5px); border-color: #fff; }
+
+        h1 { font-size: 3.5rem; margin-bottom: 0.5rem; text-shadow: 2px 2px 0px rgba(100, 100, 200, 0.5); letter-spacing: 2px; }
+        
+        /* 👇 여기 간격 수정했습니다! margin-bottom 늘림 */
+        p { 
+            font-family: 'Pretendard'; 
+            font-size: 1.1rem; 
+            opacity: 0.9; 
+            margin-bottom: 4.5rem; /* 기존 2.5rem -> 4.5rem으로 대폭 늘림 */
+            font-weight: 300; 
+        }
+
+        .start-btn {
+            background: white; color: #8890c1; font-family: 'DungGeunMo'; font-size: 1.2rem;
+            padding: 14px 40px; border-radius: 50px; border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor: pointer;
+        }
+        .start-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 255, 255, 0.6); color: #ff6b81; }
+
+        /* 스크롤 화살표 */
+        .scroll-down {
+            position: absolute; bottom: 40px; animation: bounce 2s infinite; opacity: 0.7; font-size: 0.9rem;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        /* 설명서 패널 */
+        .info-panel {
+            width: 100%; max-width: 600px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 30px; padding: 3rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15); opacity: 0; transform: translateY(50px) scale(0.95);
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .info-panel.visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        .step-item { opacity: 0; transform: translateX(-20px); transition: all 0.6s ease; }
+        .info-panel.visible .step-item { opacity: 1; transform: translateX(0); }
+        .info-panel.visible .step-item:nth-child(1) { transition-delay: 0.2s; }
+        .info-panel.visible .step-item:nth-child(2) { transition-delay: 0.4s; }
+        .info-panel.visible .step-item:nth-child(3) { transition-delay: 0.6s; }
+
+        /* 커서 */
+        .cursor-dot {
+            width: 20px; height: 20px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z'/%3E%3C/svg%3E");
+            background-size: contain; position: fixed; top: 0; left: 0; pointer-events: none; z-index: 50;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.8));
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-window-bar">
+        <div class="window-controls">
+            <div class="win-dot" style="background:#FF605C"></div> <div class="win-dot" style="background:#FFBD44"></div> <div class="win-dot" style="background:#00CA4E"></div> </div>
+        <div class="win-title">💖 MY_LIP_COLLECTOR.exe</div>
+        <div style="width: 42px;"></div> </div>
+
+    <div class="bg-fixed-layer">
+        <div class="bg-grid"></div>
+        <div class="spotlight" id="spotlight"></div>
+    </div>
+    <div class="cursor-dot" id="cursor"></div>
+
+    <section id="hero">
+        <div class="glass-box">
+            <div class="mb-4 flex justify-center gap-2">
+                <span class="text-3xl animate-bounce">💄</span>
+                <span class="text-3xl animate-bounce" style="animation-delay: 0.1s">✨</span>
+                <span class="text-3xl animate-bounce" style="animation-delay: 0.2s">💖</span>
+            </div>
+            <h1>SMART LIP<br>COLLECTOR</h1>
+            <p>하늘 아래 같은 색조는 없다</p>
+            
+            <button class="start-btn" onclick="location.href='index.html'">내 파우치 열기 →</button>
+        </div>
+
+        <div class="scroll-down">
+            <span>HOW TO USE</span>
+            <i data-lucide="chevron-down" class="w-6 h-6"></i>
+        </div>
+    </section>
+
+    <section id="info">
+        <div class="info-panel">
+            <div class="text-center mb-10">
+                <span class="text-3xl">✨</span>
+                <h2 class="text-3xl mt-2 font-bold text-white drop-shadow-md">사용 설명서</h2>
+                <p class="text-sm opacity-70 font-['Pretendard'] mt-2">나만의 스마트한 립 컬렉터가 되어보세요!</p>
+            </div>
+
+            <div class="space-y-8 font-['Pretendard']">
+                <div class="step-item flex items-start gap-4">
+                    <div class="bg-white text-[#8890c1] w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-none shadow-lg">1</div>
+                    <div>
+                        <h3 class="font-bold text-xl mb-1">데이터 준비하기</h3>
+                        <p class="text-sm opacity-80 leading-relaxed">
+                            가지고 있는 립스틱 정보를 엑셀로 정리해주세요.<br>
+                            <span class="text-xs bg-white/20 px-1 rounded">브랜드</span>
+                            <span class="text-xs bg-white/20 px-1 rounded">제품명</span>
+                            <span class="text-xs bg-white/20 px-1 rounded">컬러명</span>
+                            <span class="text-xs bg-white/20 px-1 rounded">퍼스널컬러</span>
+                            <span class="text-xs bg-white/20 px-1 rounded">색상코드(#)</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="step-item flex items-start gap-4">
+                    <div class="bg-white text-[#8890c1] w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-none shadow-lg">2</div>
+                    <div>
+                        <h3 class="font-bold text-xl mb-1">CSV 파일로 저장</h3>
+                        <p class="text-sm opacity-80 leading-relaxed">
+                            엑셀에서 <strong>[다른 이름으로 저장]</strong>을 누르고,<br>
+                            반드시 <strong>CSV (UTF-8)</strong> 형식을 선택해 주세요.
+                        </p>
+                    </div>
+                </div>
+                <div class="step-item flex items-start gap-4">
+                    <div class="bg-white text-[#8890c1] w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-none shadow-lg">3</div>
+                    <div>
+                        <h3 class="font-bold text-xl mb-1">업로드 및 분석</h3>
+                        <p class="text-sm opacity-80 leading-relaxed">
+                            앱 하단의 <strong>[가져오기]</strong> 버튼으로 파일을 올리면,<br>
+                            AI가 11가지 톤으로 분류해서 예쁜 차트를 그려줘요! 🎨
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        lucide.createIcons();
+        const body = document.body;
+        const cursor = document.getElementById('cursor');
+        const btns = document.querySelectorAll('button');
+
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX; const y = e.clientY;
+            cursor.style.left = x + 'px'; cursor.style.top = y + 'px';
+            const xPercent = (x / window.innerWidth) * 100;
+            const yPercent = (y / window.innerHeight) * 100;
+            body.style.setProperty('--x', xPercent + '%');
+            body.style.setProperty('--y', yPercent + '%');
+        });
+
+        btns.forEach(btn => {
+            btn.addEventListener('mouseenter', () => { cursor.style.opacity = '0'; body.style.cursor = 'pointer'; });
+            btn.addEventListener('mouseleave', () => { cursor.style.opacity = '1'; body.style.cursor = 'none'; });
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.3 });
+        observer.observe(document.querySelector('.info-panel'));
+    </script>
+</body>
+</html>
