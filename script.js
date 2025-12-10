@@ -721,20 +721,28 @@ async function startCamera() {
     try {
         // face-api.js 모델 로드 (최초 1회)
         if (!faceApiLoaded && typeof faceapi !== 'undefined') {
-            loading.innerHTML = '<p class="text-sm">모델 로딩 중...</p>';
-            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.2/model/';
-            await Promise.all([
-                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-                faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL)
-            ]);
+            loading.innerHTML = '<p class="text-sm text-white">🔄 AI 모델 로딩 중...</p>';
+            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
             faceApiLoaded = true;
+            console.log('Face-API 모델 로드 완료!');
         }
 
         // 웹캠 스트림 요청
+        loading.innerHTML = '<p class="text-sm text-white">📷 카메라 연결 중...</p>';
         webcamStream = await navigator.mediaDevices.getUserMedia({
             video: { width: 640, height: 480, facingMode: 'user' }
         });
         video.srcObject = webcamStream;
+
+        // 비디오 준비 대기
+        await new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+                video.play();
+                resolve();
+            };
+        });
 
         // UI 업데이트
         loading.classList.add('hidden');
@@ -750,7 +758,7 @@ async function startCamera() {
 
     } catch (err) {
         console.error('카메라 오류:', err);
-        loading.innerHTML = `<p class="text-sm text-red-400">카메라 접근 오류: ${err.message}</p>`;
+        loading.innerHTML = `<p class="text-sm text-red-400">오류: ${err.message}</p>`;
     }
 }
 
@@ -793,31 +801,39 @@ async function detectAndDrawLips() {
     const video = document.getElementById('webcamVideo');
     const canvas = document.getElementById('lipOverlayCanvas');
 
-    if (!video || !canvas || typeof faceapi === 'undefined') {
+    if (!video || !canvas || typeof faceapi === 'undefined' || !faceApiLoaded) {
+        requestAnimationFrame(detectAndDrawLips);
+        return;
+    }
+
+    // 비디오 준비 확인
+    if (video.readyState < 2) {
         requestAnimationFrame(detectAndDrawLips);
         return;
     }
 
     // 캔버스 크기 맞춤
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    const displaySize = { width: video.videoWidth, height: video.videoHeight };
+    canvas.width = displaySize.width;
+    canvas.height = displaySize.height;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     try {
         const detection = await faceapi
-            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks(true);
+            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+            .withFaceLandmarks();
 
         if (detection) {
             const landmarks = detection.landmarks;
-            const outerLip = landmarks.getMouth().slice(0, 12);
-            const innerLip = landmarks.getMouth().slice(12, 20);
+            const mouth = landmarks.getMouth(); // 20개 포인트
 
-            // 외부 입술 그리기
+            // 입술 전체 그리기
             ctx.beginPath();
-            ctx.moveTo(outerLip[0].x, outerLip[0].y);
-            outerLip.forEach(pt => ctx.lineTo(pt.x, pt.y));
+            ctx.moveTo(mouth[0].x, mouth[0].y);
+            for (let i = 1; i < mouth.length; i++) {
+                ctx.lineTo(mouth[i].x, mouth[i].y);
+            }
             ctx.closePath();
 
             // 색상 적용 (투명도 포함)
@@ -827,21 +843,15 @@ async function detectAndDrawLips() {
             const b = parseInt(hex.slice(5, 7), 16);
             ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${lipOpacity})`;
             ctx.fill();
-
-            // 내부 입술 (입 안쪽 컷아웃 - 옵션)
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath();
-            ctx.moveTo(innerLip[0].x, innerLip[0].y);
-            innerLip.forEach(pt => ctx.lineTo(pt.x, pt.y));
-            ctx.closePath();
-            ctx.fill();
-            ctx.globalCompositeOperation = 'source-over';
         }
     } catch (e) {
-        // 감지 실패 시 무시
+        console.error('Detection error:', e);
     }
 
-    requestAnimationFrame(detectAndDrawLips);
+    // 다음 프레임
+    setTimeout(() => {
+        requestAnimationFrame(detectAndDrawLips);
+    }, 50); // 약 20fps로 제한하여 성능 개선
 }
 
 // 🎨 립 컬러 그리드 업데이트
