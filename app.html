@@ -1,158 +1,127 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>하늘 아래 같은 색조 없다</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="text-slate-800 pb-24">
+/* 👾 1. 픽셀 폰트 (둥근모꼴) 불러오기 */
+@font-face {
+    font-family: 'DungGeunMo';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
 
-    <header class="glass-header fixed top-0 w-full z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div>
-                <h1 class="text-lg font-bold text-rose-950 tracking-tight">Smart Lip Collector</h1>
-                <p class="text-xs text-rose-400 font-medium">AI 컬러 분석기</p>
-            </div>
-            <div class="text-xs font-medium bg-rose-100 text-rose-600 px-3 py-1 rounded-full">
-                <span id="headerTotalCount">0</span> items
-            </div>
-        </div>
-    </header>
+/* 🎨 2. 전체 분위기 설정 (Y2K 모눈종이) */
+body {
+    font-family: 'DungGeunMo', sans-serif; /* 모든 글씨체 변경 */
+    background-color: #E6E6FA; /* 연보라색 베이스 */
+    background-image: 
+        linear-gradient(rgba(88, 88, 180, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88, 88, 180, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px; /* 격자 무늬 */
+    color: #4a4a4a;
+    overflow: hidden; /* 스크롤바 못생기게 나오는 것 방지 */
+}
 
-    <main class="max-w-7xl mx-auto px-4 pt-24 pb-20">
-        
-        <div id="analysisSection" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 fade-in hidden">
-            
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-rose-100 flex flex-col h-full">
-                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-rose-500"></i>
-                    보유 현황 통계
-                </h2>
-                <div class="relative w-full h-80">
-                    <canvas id="personalColorChart"></canvas>
-                </div>
-                <div class="bg-slate-50 rounded-xl p-4 text-sm leading-relaxed border border-slate-100 mt-4 flex-1 flex items-center justify-center">
-                    <p id="analysisText" class="text-slate-700 text-center">데이터를 불러오는 중...</p>
-                </div>
-            </div>
+/* 🖱️ 커서도 귀엽게 (선택사항) */
+body, button, input, select {
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewport='0 0 20 20' fill='black'><text y='18' font-size='18'>👆</text></svg>"), auto;
+}
 
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-rose-100 flex flex-col h-full relative overflow-hidden">
-                <div class="flex justify-between items-center mb-4 z-10">
-                    <h2 class="text-lg font-bold flex items-center gap-2 text-slate-700">
-                        <i data-lucide="crosshair" class="w-5 h-5 text-rose-500"></i>
-                        컬러 맵 (Color Map)
-                    </h2>
-                    <span class="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-full">Light / Deep / Warm / Cool</span>
-                </div>
-                
-                <div class="relative w-full h-80 bg-slate-50/50 rounded-2xl border border-slate-100">
-                    <div class="absolute inset-0 pointer-events-none flex flex-col justify-center items-center">
-                        <div class="w-full h-px bg-rose-200/50 absolute top-1/2"></div>
-                        <div class="h-full w-px bg-rose-200/50 absolute left-1/2"></div>
-                        <div class="absolute top-4 left-4 text-lg font-bold text-orange-300/60">Spring</div>
-                        <div class="absolute top-4 right-4 text-lg font-bold text-purple-300/60">Summer</div>
-                        <div class="absolute bottom-4 left-4 text-lg font-bold text-amber-600/40">Autumn</div>
-                        <div class="absolute bottom-4 right-4 text-lg font-bold text-rose-700/40">Winter</div>
-                    </div>
-                    <div class="absolute inset-0 z-10">
-                        <canvas id="scatterChart"></canvas>
-                    </div>
-                </div>
-                <div class="mt-4 p-4 invisible">Space match</div>
-            </div>
-        </div>
+/* 🪟 3. 메인 윈도우 창 (오른쪽 화면) */
+.main-window {
+    background: #ffffff;
+    border: 2px solid #4a4a4a;
+    box-shadow: 8px 8px 0px rgba(74, 74, 74, 0.2); /* 픽셀 그림자 */
+    border-radius: 12px;
+    height: 100%;
+    overflow-y: auto;
+    position: relative;
+}
 
-        <div class="bg-white p-6 rounded-3xl shadow-lg border border-rose-100 mb-8 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-orange-400"></div>
-            <h3 class="text-sm font-bold mb-4 text-slate-700 flex items-center gap-2">
-                <i data-lucide="sparkles" class="w-4 h-4 text-yellow-500"></i> 새 립스틱 등록
-            </h3>
+/* 📂 4. 왼쪽 폴더 탭 디자인 */
+.folder-tab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    margin-bottom: 12px;
+    background-color: #f0f0f0;
+    border: 2px solid #4a4a4a;
+    border-right: none; /* 오른쪽 선을 터서 연결된 느낌 */
+    border-radius: 12px 0 0 12px;
+    cursor: pointer;
+    transition: all 0.1s;
+    font-size: 1.1rem;
+    color: #888;
+    position: relative;
+    right: -2px; /* 메인 윈도우와 딱 붙게 */
+}
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="md:col-span-1">
-                    <label class="block w-full h-32 md:h-full border-2 border-dashed border-rose-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-rose-50 transition relative overflow-hidden group min-h-[160px]">
-                        <img id="imagePreview" class="absolute inset-0 w-full h-full object-cover hidden opacity-80">
-                        <div class="text-center z-10 p-2 bg-white/80 rounded-xl backdrop-blur-sm">
-                            <i data-lucide="camera" class="w-6 h-6 text-rose-400 mx-auto mb-1"></i>
-                            <span class="text-xs text-slate-500 font-medium">색상 추출</span>
-                        </div>
-                        <input type="file" id="imageInput" accept="image/*" class="hidden">
-                    </label>
-                </div>
+.folder-tab:hover {
+    background-color: #ffe4e1; /* 호버시 연한 핑크 */
+    color: #4a4a4a;
+    transform: translateX(-5px); /* 살짝 튀어나옴 */
+}
 
-                <div class="md:col-span-3 space-y-3">
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="inputBrand" placeholder="브랜드 (예: 롬앤)" class="input-field">
-                        <input type="text" id="inputName" placeholder="제품명" class="input-field">
-                    </div>
-                    
-                    <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-200">
-                        <input type="color" id="inputHex" class="h-10 w-10 rounded cursor-pointer border-0 bg-transparent flex-none" value="#ff0000">
-                        <div class="flex-1 min-w-0">
-                            <input type="text" id="inputColorName" placeholder="컬러명 (예: 베어그레이프)" class="w-full bg-transparent text-sm font-medium outline-none text-slate-700">
-                        </div>
-                    </div>
+.folder-tab.active {
+    background-color: #ffffff;
+    color: #FF6B81; /* 활성화 포인트 컬러 */
+    font-weight: bold;
+    width: calc(100% + 4px); /* 오른쪽으로 더 길게 */
+    z-index: 10;
+    box-shadow: -4px 4px 0px rgba(0,0,0,0.05);
+}
 
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="col-span-2 relative">
-                            <select id="inputPersonalColor" class="input-field appearance-none bg-white">
-                                <option value="" disabled selected>🎨 퍼스널 컬러 (자동 추천됨)</option>
-                                <option value="봄 웜 라이트">🌸 봄 웜 라이트</option>
-                                <option value="봄 웜 브라이트">🌺 봄 웜 브라이트</option>
-                                <option value="여름 쿨 라이트">🍧 여름 쿨 라이트</option>
-                                <option value="여름 쿨 브라이트">🍉 여름 쿨 브라이트</option>
-                                <option value="여름 쿨 뮤트">🌫️ 여름 쿨 뮤트</option>
-                                <option value="가을 웜 뮤트">🍂 가을 웜 뮤트</option>
-                                <option value="가을 웜 딥">🍁 가을 웜 딥</option>
-                                <option value="가을 웜 다크">☕ 가을 웜 다크</option>
-                                <option value="겨울 쿨 브라이트">🍒 겨울 쿨 브라이트</option>
-                                <option value="겨울 쿨 딥">🍷 겨울 쿨 딥</option>
-                                <option value="겨울 쿨 다크">🖤 겨울 쿨 다크</option>
-                                <option value="잘 모름">🤔 잘 모르겠음</option>
-                            </select>
-                            <i data-lucide="chevron-down" class="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"></i>
-                        </div>
-                        <button id="addBtn" class="col-span-1 py-3 bg-rose-500 text-white rounded-xl text-sm font-bold shadow-md hover:bg-rose-600 transition">
-                            등록
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+/* 🍬 5. 픽셀 버튼 */
+.pixel-btn {
+    background-color: #FFB7B2;
+    border: 2px solid #4a4a4a;
+    box-shadow: 4px 4px 0px #4a4a4a;
+    color: #4a4a4a;
+    transition: all 0.1s;
+}
+.pixel-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #4a4a4a;
+}
 
-        <div class="sticky top-[60px] z-40 bg-[#FDFBF7] pb-4 pt-2">
-            <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar justify-center">
-                <button onclick="filterBy('all')" class="filter-chip active" id="filter-all">전체</button>
-                <button onclick="filterBy('봄')" class="filter-chip" id="filter-spring">봄웜</button>
-                <button onclick="filterBy('여름')" class="filter-chip" id="filter-summer">여름쿨</button>
-                <button onclick="filterBy('가을')" class="filter-chip" id="filter-autumn">가을웜</button>
-                <button onclick="filterBy('겨울')" class="filter-chip" id="filter-winter">겨울쿨</button>
-            </div>
-        </div>
+/* 📝 6. 입력창 (구형 윈도우 스타일) */
+.pixel-input {
+    border: 2px solid #4a4a4a;
+    background: #f8f9fa;
+    box-shadow: inset 2px 2px 0px #ddd;
+    border-radius: 8px;
+    font-family: 'DungGeunMo';
+}
+.pixel-input:focus {
+    background: #fff;
+    outline: none;
+    box-shadow: inset 2px 2px 0px #ffccd5;
+}
 
-        <div id="lipstickGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12"></div>
+/* 🌈 7. 스크롤바 (픽셀 스타일) */
+::-webkit-scrollbar { width: 16px; }
+::-webkit-scrollbar-track { background: #f0f0f0; border-left: 2px solid #4a4a4a; }
+::-webkit-scrollbar-thumb { 
+    background: #d8b4fe; 
+    border: 2px solid #4a4a4a;
+    box-shadow: inset 2px 2px 0px rgba(255,255,255,0.5);
+}
 
-        <div class="flex justify-center gap-4 mb-20 text-xs text-stone-400">
-            <button id="downloadBtn" class="hover:text-stone-600 underline">데이터 백업</button>
-            <span>|</span>
-            <label class="cursor-pointer hover:text-stone-600 underline">
-                가져오기
-                <input type="file" id="csvUpload" accept=".csv" class="hidden">
-            </label>
-            <span>|</span>
-            <button id="sampleBtn" class="hover:text-stone-600 underline">샘플 추가</button>
-            <span>|</span>
-            <button id="resetBtn" class="hover:text-red-400 underline">초기화</button>
-        </div>
+/* ✨ 8. 애니메이션 */
+.fade-in { animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+@keyframes popIn { 
+    from { opacity: 0; transform: scale(0.95); } 
+    to { opacity: 1; transform: scale(1); } 
+}
 
-    </main>
-
-    <script src="script.js"></script>
-</body>
-</html>
+/* 필터 칩 */
+.filter-chip {
+    border: 2px solid #4a4a4a;
+    background: white;
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    transition: 0.1s;
+}
+.filter-chip.active {
+    background: #4a4a4a;
+    color: white;
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+}
