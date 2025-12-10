@@ -2,157 +2,205 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>하늘 아래 같은 색조 없다</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Lip Collector</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        @font-face {
+            font-family: 'DungGeunMo';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #8890c1;
+            color: white;
+            font-family: 'DungGeunMo', 'Pretendard', sans-serif;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #8890c1; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.5); border-radius: 4px; }
+
+        /* ✨ 상단 윈도우 장식 바 */
+        .top-window-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 48px;
+            background-color: #E0B3CA;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-bottom: 2px solid rgba(255,255,255,0.4);
+        }
+
+        .window-controls { display: flex; gap: 8px; }
+        .win-dot { width: 14px; height: 14px; border-radius: 50%; background-color: white; opacity: 0.8; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1); }
+        .win-title { font-size: 14px; opacity: 0.8; letter-spacing: 1px; }
+
+        .bg-fixed-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .bg-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, 0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.25) 1px, transparent 1px); background-size: 40px 40px; }
+        .spotlight { position: absolute; inset: 0; background: radial-gradient(circle 450px at var(--x, 50%) var(--y, 50%), rgba(255, 255, 255, 0.4) 0%, rgba(255, 230, 240, 0.1) 40%, transparent 70%); mix-blend-mode: overlay; }
+
+        section { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; z-index: 10; }
+
+        .glass-box {
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 24px; padding: 3rem 4rem; text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease;
+            margin-top: 48px;
+        }
+        .glass-box:hover { transform: translateY(-5px); border-color: #fff; }
+
+        h1 { font-size: 3.5rem; margin-bottom: 0.5rem; text-shadow: 2px 2px 0px rgba(100, 100, 200, 0.5); letter-spacing: 2px; }
+        p { font-family: 'Pretendard'; font-size: 1.1rem; opacity: 0.9; margin-bottom: 4.5rem; font-weight: 300; }
+
+        .start-btn {
+            background: white; color: #8890c1; font-family: 'DungGeunMo'; font-size: 1.2rem;
+            padding: 14px 40px; border-radius: 50px; border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor: pointer;
+        }
+        .start-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 255, 255, 0.6); color: #ff6b81; }
+
+        .scroll-down { position: absolute; bottom: 40px; animation: bounce 2s infinite; opacity: 0.7; font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
+
+        .info-panel {
+            width: 100%; max-width: 600px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 30px; padding: 3rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15); opacity: 0; transform: translateY(50px) scale(0.95);
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .info-panel.visible { opacity: 1; transform: translateY(0) scale(1); }
+
+        .step-item { opacity: 0; transform: translateX(-20px); transition: all 0.6s ease; }
+        .info-panel.visible .step-item { opacity: 1; transform: translateX(0); }
+        .info-panel.visible .step-item:nth-child(1) { transition-delay: 0.2s; }
+        .info-panel.visible .step-item:nth-child(2) { transition-delay: 0.4s; }
+        .info-panel.visible .step-item:nth-child(3) { transition-delay: 0.6s; }
+
+        .cursor-dot { width: 20px; height: 20px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z'/%3E%3C/svg%3E"); background-size: contain; position: fixed; top: 0; left: 0; pointer-events: none; z-index: 50; filter: drop-shadow(0 0 5px rgba(255,255,255,0.8)); }
+    </style>
 </head>
-<body class="text-slate-800 pb-24">
+<body>
 
-    <header class="glass-header fixed top-0 w-full z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div>
-                <h1 class="text-lg font-bold text-rose-950 tracking-tight">Smart Lip Collector</h1>
-                <p class="text-xs text-rose-400 font-medium">AI 컬러 분석기</p>
-            </div>
-            <div class="text-xs font-medium bg-rose-100 text-rose-600 px-3 py-1 rounded-full">
-                <span id="headerTotalCount">0</span> items
-            </div>
+    <div class="top-window-bar">
+        <div class="window-controls">
+            <div class="win-dot" style="background:#FF605C"></div>
+            <div class="win-dot" style="background:#FFBD44"></div>
+            <div class="win-dot" style="background:#00CA4E"></div>
         </div>
-    </header>
+        <div class="win-title">💖 MY_LIP_COLLECTOR.exe</div>
+        <div style="width: 42px;"></div>
+    </div>
 
-    <main class="max-w-7xl mx-auto px-4 pt-24 pb-20">
-        
-        <div id="analysisSection" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 fade-in hidden">
+    <div class="bg-fixed-layer">
+        <div class="bg-grid"></div>
+        <div class="spotlight" id="spotlight"></div>
+    </div>
+    <div class="cursor-dot" id="cursor"></div>
+
+    <section id="hero">
+        <div class="glass-box">
+            <div class="mb-4 flex justify-center gap-2">
+                <span class="text-3xl animate-bounce">💄</span>
+                <span class="text-3xl animate-bounce" style="animation-delay: 0.1s">✨</span>
+                <span class="text-3xl animate-bounce" style="animation-delay: 0.2s">💖</span>
+            </div>
+            <h1>SMART LIP<br>COLLECTOR</h1>
+            <p>하늘 아래 같은 색조는 없다</p>
             
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-rose-100 flex flex-col h-full">
-                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-rose-500"></i>
-                    보유 현황 통계
-                </h2>
-                <div class="relative w-full h-80">
-                    <canvas id="personalColorChart"></canvas>
-                </div>
-                <div class="bg-slate-50 rounded-xl p-4 text-sm leading-relaxed border border-slate-100 mt-4 flex-1 flex items-center justify-center">
-                    <p id="analysisText" class="text-slate-700 text-center">데이터를 불러오는 중...</p>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-rose-100 flex flex-col h-full relative overflow-hidden">
-                <div class="flex justify-between items-center mb-4 z-10">
-                    <h2 class="text-lg font-bold flex items-center gap-2 text-slate-700">
-                        <i data-lucide="crosshair" class="w-5 h-5 text-rose-500"></i>
-                        컬러 맵 (Color Map)
-                    </h2>
-                    <span class="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-full">Light / Deep / Warm / Cool</span>
-                </div>
-                
-                <div class="relative w-full h-80 bg-slate-50/50 rounded-2xl border border-slate-100">
-                    <div class="absolute inset-0 pointer-events-none flex flex-col justify-center items-center">
-                        <div class="w-full h-px bg-rose-200/50 absolute top-1/2"></div>
-                        <div class="h-full w-px bg-rose-200/50 absolute left-1/2"></div>
-                        <div class="absolute top-4 left-4 text-lg font-bold text-orange-300/60">Spring</div>
-                        <div class="absolute top-4 right-4 text-lg font-bold text-purple-300/60">Summer</div>
-                        <div class="absolute bottom-4 left-4 text-lg font-bold text-amber-600/40">Autumn</div>
-                        <div class="absolute bottom-4 right-4 text-lg font-bold text-rose-700/40">Winter</div>
-                    </div>
-                    <div class="absolute inset-0 z-10">
-                        <canvas id="scatterChart"></canvas>
-                    </div>
-                </div>
-                <div class="mt-4 p-4 invisible">Space match</div>
-            </div>
+            <button class="start-btn" onclick="location.href='app.html'">내 파우치 열기 →</button>
         </div>
 
-        <div class="bg-white p-6 rounded-3xl shadow-lg border border-rose-100 mb-8 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-orange-400"></div>
-            <h3 class="text-sm font-bold mb-4 text-slate-700 flex items-center gap-2">
-                <i data-lucide="sparkles" class="w-4 h-4 text-yellow-500"></i> 새 립스틱 등록
-            </h3>
+        <div class="scroll-down">
+            <span>HOW TO USE</span>
+            <i data-lucide="chevron-down" class="w-6 h-6"></i>
+        </div>
+    </section>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="md:col-span-1">
-                    <label class="block w-full h-32 md:h-full border-2 border-dashed border-rose-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-rose-50 transition relative overflow-hidden group min-h-[160px]">
-                        <img id="imagePreview" class="absolute inset-0 w-full h-full object-cover hidden opacity-80">
-                        <div class="text-center z-10 p-2 bg-white/80 rounded-xl backdrop-blur-sm">
-                            <i data-lucide="camera" class="w-6 h-6 text-rose-400 mx-auto mb-1"></i>
-                            <span class="text-xs text-slate-500 font-medium">색상 추출</span>
-                        </div>
-                        <input type="file" id="imageInput" accept="image/*" class="hidden">
-                    </label>
+    <section id="info">
+        <div class="info-panel">
+            <div class="text-center mb-10">
+                <span class="text-3xl">✨</span>
+                <h2 class="text-3xl mt-2 font-bold text-white drop-shadow-md">사용 설명서</h2>
+                <p class="text-sm opacity-70 font-['Pretendard'] mt-2">나만의 스마트한 립 컬렉터가 되어보세요!</p>
+            </div>
+
+            <div class="space-y-8 font-['Pretendard']">
+                <div class="step-item flex items-start gap-4">
+                    <div class="bg-white text-[#8890c1] w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-none shadow-lg">1</div>
+                    <div>
+                        <h3 class="font-bold text-xl mb-1">데이터 준비하기</h3>
+                        <p class="text-sm opacity-80 leading-relaxed">
+                            가지고 있는 립스틱 정보를 엑셀로 정리해주세요.<br>
+                            <span class="text-xs bg-white/20 px-1 rounded">브랜드</span> <span class="text-xs bg-white/20 px-1 rounded">제품명</span> <span class="text-xs bg-white/20 px-1 rounded">컬러명</span> <span class="text-xs bg-white/20 px-1 rounded">퍼스널컬러</span> <span class="text-xs bg-white/20 px-1 rounded">색상코드(#)</span>
+                        </p>
+                    </div>
                 </div>
-
-                <div class="md:col-span-3 space-y-3">
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="inputBrand" placeholder="브랜드 (예: 롬앤)" class="input-field">
-                        <input type="text" id="inputName" placeholder="제품명" class="input-field">
+                <div class="step-item flex items-start gap-4">
+                    <div class="bg-white text-[#8890c1] w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-none shadow-lg">2</div>
+                    <div>
+                        <h3 class="font-bold text-xl mb-1">CSV 파일로 저장</h3>
+                        <p class="text-sm opacity-80 leading-relaxed">
+                            엑셀에서 <strong>[다른 이름으로 저장]</strong>을 누르고,<br>
+                            반드시 <strong>CSV (UTF-8)</strong> 형식을 선택해 주세요.
+                        </p>
                     </div>
-                    
-                    <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-200">
-                        <input type="color" id="inputHex" class="h-10 w-10 rounded cursor-pointer border-0 bg-transparent flex-none" value="#ff0000">
-                        <div class="flex-1 min-w-0">
-                            <input type="text" id="inputColorName" placeholder="컬러명 (예: 베어그레이프)" class="w-full bg-transparent text-sm font-medium outline-none text-slate-700">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="col-span-2 relative">
-                            <select id="inputPersonalColor" class="input-field appearance-none bg-white">
-                                <option value="" disabled selected>🎨 퍼스널 컬러 (자동 추천됨)</option>
-                                <option value="봄 웜 라이트">🌸 봄 웜 라이트</option>
-                                <option value="봄 웜 브라이트">🌺 봄 웜 브라이트</option>
-                                <option value="여름 쿨 라이트">🍧 여름 쿨 라이트</option>
-                                <option value="여름 쿨 브라이트">🍉 여름 쿨 브라이트</option>
-                                <option value="여름 쿨 뮤트">🌫️ 여름 쿨 뮤트</option>
-                                <option value="가을 웜 뮤트">🍂 가을 웜 뮤트</option>
-                                <option value="가을 웜 딥">🍁 가을 웜 딥</option>
-                                <option value="가을 웜 다크">☕ 가을 웜 다크</option>
-                                <option value="겨울 쿨 브라이트">🍒 겨울 쿨 브라이트</option>
-                                <option value="겨울 쿨 딥">🍷 겨울 쿨 딥</option>
-                                <option value="겨울 쿨 다크">🖤 겨울 쿨 다크</option>
-                                <option value="잘 모름">🤔 잘 모르겠음</option>
-                            </select>
-                            <i data-lucide="chevron-down" class="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"></i>
-                        </div>
-                        <button id="addBtn" class="col-span-1 py-3 bg-rose-500 text-white rounded-xl text-sm font-bold shadow-md hover:bg-rose-600 transition">
-                            등록
-                        </button>
+                </div>
+                <div class="step-item flex items-start gap-4">
+                    <div class="bg-white text-[#8890c1] w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-none shadow-lg">3</div>
+                    <div>
+                        <h3 class="font-bold text-xl mb-1">업로드 및 분석</h3>
+                        <p class="text-sm opacity-80 leading-relaxed">
+                            앱 하단의 <strong>[가져오기]</strong> 버튼으로 파일을 올리면,<br>
+                            AI가 11가지 톤으로 분류해서 예쁜 차트를 그려줘요! 🎨
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <div class="sticky top-[60px] z-40 bg-[#FDFBF7] pb-4 pt-2">
-            <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar justify-center">
-                <button onclick="filterBy('all')" class="filter-chip active" id="filter-all">전체</button>
-                <button onclick="filterBy('봄')" class="filter-chip" id="filter-spring">봄웜</button>
-                <button onclick="filterBy('여름')" class="filter-chip" id="filter-summer">여름쿨</button>
-                <button onclick="filterBy('가을')" class="filter-chip" id="filter-autumn">가을웜</button>
-                <button onclick="filterBy('겨울')" class="filter-chip" id="filter-winter">겨울쿨</button>
-            </div>
-        </div>
+    <script>
+        lucide.createIcons();
+        const body = document.body;
+        const cursor = document.getElementById('cursor');
+        const btns = document.querySelectorAll('button');
 
-        <div id="lipstickGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12"></div>
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX; const y = e.clientY;
+            cursor.style.left = x + 'px'; cursor.style.top = y + 'px';
+            const xPercent = (x / window.innerWidth) * 100;
+            const yPercent = (y / window.innerHeight) * 100;
+            body.style.setProperty('--x', xPercent + '%');
+            body.style.setProperty('--y', yPercent + '%');
+        });
 
-        <div class="flex justify-center gap-4 mb-20 text-xs text-stone-400">
-            <button id="downloadBtn" class="hover:text-stone-600 underline">데이터 백업</button>
-            <span>|</span>
-            <label class="cursor-pointer hover:text-stone-600 underline">
-                가져오기
-                <input type="file" id="csvUpload" accept=".csv" class="hidden">
-            </label>
-            <span>|</span>
-            <button id="sampleBtn" class="hover:text-stone-600 underline">샘플 추가</button>
-            <span>|</span>
-            <button id="resetBtn" class="hover:text-red-400 underline">초기화</button>
-        </div>
+        btns.forEach(btn => {
+            btn.addEventListener('mouseenter', () => { cursor.style.opacity = '0'; body.style.cursor = 'pointer'; });
+            btn.addEventListener('mouseleave', () => { cursor.style.opacity = '1'; body.style.cursor = 'none'; });
+        });
 
-    </main>
-
-    <script src="script.js"></script>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.3 });
+        observer.observe(document.querySelector('.info-panel'));
+    </script>
 </body>
 </html>
