@@ -1,112 +1,127 @@
-/* 폰트: 프리텐다드 */
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+/* 👾 1. 픽셀 폰트 (둥근모꼴) 불러오기 */
+@font-face {
+    font-family: 'DungGeunMo';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
 
+/* 🎨 2. 전체 분위기 설정 (Y2K 모눈종이) */
 body {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-    /* PC 배경 고정 (스크롤해도 배경은 가만히) */
-    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-    background-attachment: fixed; 
-    color: #4b5563;
-    min-height: 100vh;
+    font-family: 'DungGeunMo', sans-serif; /* 모든 글씨체 변경 */
+    background-color: #E6E6FA; /* 연보라색 베이스 */
+    background-image: 
+        linear-gradient(rgba(88, 88, 180, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88, 88, 180, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px; /* 격자 무늬 */
+    color: #4a4a4a;
+    overflow: hidden; /* 스크롤바 못생기게 나오는 것 방지 */
 }
 
-/* 🖱️ 예쁜 커스텀 스크롤바 */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-::-webkit-scrollbar-track {
-    background: transparent; 
-}
-::-webkit-scrollbar-thumb {
-    background: #d1d5db; 
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af; 
+/* 🖱️ 커서도 귀엽게 (선택사항) */
+body, button, input, select {
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewport='0 0 20 20' fill='black'><text y='18' font-size='18'>👆</text></svg>"), auto;
 }
 
-/* 유틸리티: 스크롤바 숨기기 (가로 스크롤 메뉴용) */
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-/* 헤더: 유리 질감 */
-.glass-header {
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-    z-index: 50;
-}
-
-/* 카드 디자인: PC 화면에서 더 예쁜 그림자 */
-.bg-white {
-    background: rgba(255, 255, 255, 0.9) !important;
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.01);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* 입력 필드 */
-.input-field {
-    width: 100%;
-    padding: 12px 16px;
+/* 🪟 3. 메인 윈도우 창 (오른쪽 화면) */
+.main-window {
+    background: #ffffff;
+    border: 2px solid #4a4a4a;
+    box-shadow: 8px 8px 0px rgba(74, 74, 74, 0.2); /* 픽셀 그림자 */
     border-radius: 12px;
-    background-color: #f9fafb;
-    border: 1px solid #e5e7eb;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.2s ease;
-    color: #374151;
+    height: 100%;
+    overflow-y: auto;
+    position: relative;
 }
 
-.input-field:focus {
-    background-color: white;
-    border-color: #f43f5e;
-    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
-}
-
-/* 필터 칩 버튼 */
-.filter-chip {
-    padding: 8px 18px;
-    border-radius: 100px;
-    background: white;
-    border: 1px solid #e5e7eb;
-    color: #6b7280;
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-    transition: all 0.2s;
+/* 📂 4. 왼쪽 폴더 탭 디자인 */
+.folder-tab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    margin-bottom: 12px;
+    background-color: #f0f0f0;
+    border: 2px solid #4a4a4a;
+    border-right: none; /* 오른쪽 선을 터서 연결된 느낌 */
+    border-radius: 12px 0 0 12px;
     cursor: pointer;
+    transition: all 0.1s;
+    font-size: 1.1rem;
+    color: #888;
+    position: relative;
+    right: -2px; /* 메인 윈도우와 딱 붙게 */
 }
 
-.filter-chip:hover {
-    background-color: #f3f4f6;
-    transform: translateY(-1px);
+.folder-tab:hover {
+    background-color: #ffe4e1; /* 호버시 연한 핑크 */
+    color: #4a4a4a;
+    transform: translateX(-5px); /* 살짝 튀어나옴 */
 }
 
+.folder-tab.active {
+    background-color: #ffffff;
+    color: #FF6B81; /* 활성화 포인트 컬러 */
+    font-weight: bold;
+    width: calc(100% + 4px); /* 오른쪽으로 더 길게 */
+    z-index: 10;
+    box-shadow: -4px 4px 0px rgba(0,0,0,0.05);
+}
+
+/* 🍬 5. 픽셀 버튼 */
+.pixel-btn {
+    background-color: #FFB7B2;
+    border: 2px solid #4a4a4a;
+    box-shadow: 4px 4px 0px #4a4a4a;
+    color: #4a4a4a;
+    transition: all 0.1s;
+}
+.pixel-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #4a4a4a;
+}
+
+/* 📝 6. 입력창 (구형 윈도우 스타일) */
+.pixel-input {
+    border: 2px solid #4a4a4a;
+    background: #f8f9fa;
+    box-shadow: inset 2px 2px 0px #ddd;
+    border-radius: 8px;
+    font-family: 'DungGeunMo';
+}
+.pixel-input:focus {
+    background: #fff;
+    outline: none;
+    box-shadow: inset 2px 2px 0px #ffccd5;
+}
+
+/* 🌈 7. 스크롤바 (픽셀 스타일) */
+::-webkit-scrollbar { width: 16px; }
+::-webkit-scrollbar-track { background: #f0f0f0; border-left: 2px solid #4a4a4a; }
+::-webkit-scrollbar-thumb { 
+    background: #d8b4fe; 
+    border: 2px solid #4a4a4a;
+    box-shadow: inset 2px 2px 0px rgba(255,255,255,0.5);
+}
+
+/* ✨ 8. 애니메이션 */
+.fade-in { animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+@keyframes popIn { 
+    from { opacity: 0; transform: scale(0.95); } 
+    to { opacity: 1; transform: scale(1); } 
+}
+
+/* 필터 칩 */
+.filter-chip {
+    border: 2px solid #4a4a4a;
+    background: white;
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    transition: 0.1s;
+}
 .filter-chip.active {
-    background: #1f2937;
+    background: #4a4a4a;
     color: white;
-    border-color: #1f2937;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
 }
-
-/* 컬러칩 테두리 */
-.color-swatch {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border: 2px solid white;
-}
-
-/* 애니메이션 */
-.fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-/* 커서 설정 */
-button, label, select { cursor: pointer; }
