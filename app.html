@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Lip Collection</title>
+    <title>Smart Lip Collector</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -12,173 +12,237 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 폴더 탭 스타일 별도 정의 */
+        .folder-tab {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 20px;
+            margin-bottom: 8px;
+            border-radius: 12px 0 0 12px; /* 왼쪽만 둥글게 */
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            color: #94a3b8;
+            position: relative;
+            right: -2px; /* 오른쪽 선을 덮기 위해 살짝 이동 */
+        }
+
+        .folder-tab:hover {
+            background-color: #e2e8f0;
+            color: #64748b;
+        }
+
+        .folder-tab.active {
+            background-color: white; /* 활성화되면 흰색 (메인화면과 연결) */
+            color: #f43f5e; /* 로즈 컬러 */
+            box-shadow: -4px 4px 10px rgba(0,0,0,0.03);
+            z-index: 10;
+        }
+
+        /* 메인 컨텐츠 영역 */
+        .main-window {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+            min-height: 80vh;
+        }
+    </style>
 </head>
-<body class="h-screen flex items-center justify-center p-4 md:p-8">
+<body class="bg-[#F2F2F2] text-slate-800 h-screen overflow-hidden flex font-sans">
 
-    <div class="w-full max-w-7xl h-full flex gap-0">
-        
-        <aside class="w-20 md:w-64 flex-none flex flex-col pt-4 z-10">
-            <div class="mb-8 px-2 md:px-4 text-center md:text-left">
-                <div class="inline-block bg-white border-2 border-gray-800 p-2 shadow-[4px_4px_0px_rgba(0,0,0,0.2)] mb-2">
-                    <span class="text-2xl">💄</span>
-                </div>
-                <h1 class="hidden md:block text-2xl text-gray-800" style="text-shadow: 2px 2px 0px white;">
-                    MY LIP<br>ARCHIVE
-                </h1>
+    <aside class="w-64 flex-none flex flex-col pt-10 pl-6 pb-6">
+        <div class="mb-10 px-4">
+            <h1 class="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+                <span class="bg-rose-500 text-white p-1 rounded-lg"><i data-lucide="gem" class="w-4 h-4"></i></span>
+                MY LIP
+            </h1>
+            <p class="text-[10px] text-slate-400 mt-1 ml-1 font-mono">Ver 2.0 / Folder OS</p>
+        </div>
+
+        <nav class="flex-1 space-y-1">
+            <button onclick="switchTab('home')" id="tab-home" class="folder-tab w-full active">
+                <i data-lucide="home" class="w-5 h-5"></i>
+                HOME
+            </button>
+            <button onclick="switchTab('list')" id="tab-list" class="folder-tab w-full">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                LIST
+            </button>
+            <button onclick="switchTab('analyze')" id="tab-analyze" class="folder-tab w-full">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                ANALYZE
+            </button>
+            <button onclick="switchTab('deco')" id="tab-deco" class="folder-tab w-full">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                DECO
+            </button>
+        </nav>
+
+        <div class="px-4 mb-4">
+            <div class="bg-white/50 p-4 rounded-2xl border border-white">
+                <p class="text-xs text-slate-400 mb-1">Total Items</p>
+                <p class="text-2xl font-bold text-slate-700"><span id="headerTotalCount">0</span> ea</p>
             </div>
+        </div>
+    </aside>
 
-            <nav class="flex-1 pr-0">
-                <button onclick="switchTab('home')" id="tab-home" class="folder-tab w-full active">
-                    <i data-lucide="home" class="w-5 h-5"></i>
-                    <span class="hidden md:inline">HOME</span>
-                </button>
-                <button onclick="switchTab('list')" id="tab-list" class="folder-tab w-full">
-                    <i data-lucide="folder-heart" class="w-5 h-5"></i>
-                    <span class="hidden md:inline">POUCH</span>
-                </button>
-                <button onclick="switchTab('analyze')" id="tab-analyze" class="folder-tab w-full">
-                    <i data-lucide="pie-chart" class="w-5 h-5"></i>
-                    <span class="hidden md:inline">ANALYZE</span>
-                </button>
-                <button onclick="switchTab('deco')" id="tab-deco" class="folder-tab w-full">
-                    <i data-lucide="gamepad-2" class="w-5 h-5"></i>
-                    <span class="hidden md:inline">DECO</span>
-                </button>
-            </nav>
-
-            <div class="hidden md:block p-4 mt-auto">
-                <div class="bg-[#FFF4E6] border-2 border-gray-800 p-3 rounded-lg shadow-[4px_4px_0px_rgba(0,0,0,0.1)]">
-                    <p class="text-xs text-gray-500">COLLECTED ITEMS</p>
-                    <p class="text-xl text-rose-500 text-right"><span id="headerTotalCount">0</span> ea</p>
-                </div>
-            </div>
-        </aside>
-
-        <main class="main-window flex-1 p-6 md:p-10">
+    <main class="flex-1 py-6 pr-6 overflow-hidden">
+        <div class="main-window w-full h-full overflow-y-auto p-8 relative">
             
-            <section id="view-home" class="fade-in h-full flex flex-col">
-                <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-dashed border-gray-300">
-                    <h2 class="text-2xl">✨ DASHBOARD & ADD</h2>
-                    <div class="flex gap-2">
-                        <div class="w-4 h-4 rounded-full bg-red-400 border border-black"></div>
-                        <div class="w-4 h-4 rounded-full bg-yellow-400 border border-black"></div>
-                        <div class="w-4 h-4 rounded-full bg-green-400 border border-black"></div>
-                    </div>
-                </div>
+            <section id="view-home" class="fade-in max-w-5xl mx-auto">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <span class="w-2 h-8 bg-rose-500 rounded-full"></span> 대시보드
+                </h2>
 
-                <div class="flex-1 overflow-y-auto pr-2">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                        <div class="bg-gray-50 p-4 border-2 border-gray-800 rounded-xl relative">
-                            <div class="absolute -top-3 left-4 bg-yellow-200 border-2 border-black px-2 text-xs">📊 CHART</div>
-                            <div class="h-64"><canvas id="personalColorChart"></canvas></div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 h-80">
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex flex-col">
+                        <h3 class="text-sm font-bold text-slate-500 mb-2">📊 보유 현황</h3>
+                        <div class="flex-1 relative w-full min-h-0">
+                            <canvas id="personalColorChart"></canvas>
                         </div>
-                        <div class="bg-gray-50 p-4 border-2 border-gray-800 rounded-xl relative">
-                            <div class="absolute -top-3 left-4 bg-blue-200 border-2 border-black px-2 text-xs">🎯 MAP</div>
-                            <div class="h-64 relative bg-white border border-gray-200 rounded-lg">
-                                <div class="absolute inset-0 p-2 z-10"><canvas id="scatterChart"></canvas></div>
-                                <div class="absolute inset-0 flex justify-between flex-col p-2 opacity-30 pointer-events-none">
-                                    <div class="flex justify-between"><span class="text-orange-500 text-xs">SPRING</span><span class="text-purple-500 text-xs">SUMMER</span></div>
-                                    <div class="flex justify-between"><span class="text-amber-700 text-xs">AUTUMN</span><span class="text-rose-700 text-xs">WINTER</span></div>
-                                </div>
+                    </div>
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex flex-col relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-2 z-10">
+                            <h3 class="text-sm font-bold text-slate-500">🎯 컬러 맵</h3>
+                            <span class="text-[10px] bg-white px-2 py-1 rounded-full text-slate-400">Light / Deep</span>
+                        </div>
+                        <div class="flex-1 relative w-full min-h-0 bg-white/50 rounded-2xl border border-slate-200/50">
+                            <div class="absolute inset-0 z-10 p-2"><canvas id="scatterChart"></canvas></div>
+                            <div class="absolute inset-0 pointer-events-none flex justify-between flex-col p-4 opacity-20">
+                                <div class="flex justify-between"><span class="text-orange-500 font-bold">Spring</span><span class="text-purple-500 font-bold">Summer</span></div>
+                                <div class="flex justify-between"><span class="text-amber-700 font-bold">Autumn</span><span class="text-rose-700 font-bold">Winter</span></div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="bg-[#FFF0F5] border-2 border-gray-800 rounded-xl p-6 shadow-[6px_6px_0px_#FFB7B2]">
-                        <h3 class="text-lg mb-4 flex items-center gap-2"><i data-lucide="plus-square" class="w-5 h-5"></i> NEW ITEM</h3>
-                        
-                        <div class="flex flex-col md:flex-row gap-6">
-                            <label class="w-full md:w-40 h-40 bg-white border-2 border-dashed border-gray-400 flex flex-col items-center justify-center cursor-pointer hover:border-rose-400 transition group relative">
-                                <img id="imagePreview" class="absolute inset-0 w-full h-full object-cover hidden opacity-80">
-                                <i data-lucide="camera" class="w-8 h-8 text-gray-300 group-hover:text-rose-400"></i>
-                                <span class="text-xs text-gray-400 mt-2">CLICK!</span>
+                <div class="border-t border-slate-100 pt-8 mt-8">
+                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                        <span class="w-2 h-8 bg-slate-800 rounded-full"></span> 새 립스틱 등록
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="md:col-span-1">
+                            <label class="block w-full h-40 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-rose-300 transition group bg-white">
+                                <img id="imagePreview" class="w-full h-full object-cover rounded-2xl hidden opacity-80">
+                                <div class="text-center z-10 group-hover:scale-110 transition">
+                                    <i data-lucide="camera" class="w-6 h-6 text-slate-400 mx-auto mb-1"></i>
+                                    <span class="text-xs text-slate-400 font-bold">사진 추가</span>
+                                </div>
                                 <input type="file" id="imageInput" accept="image/*" class="hidden">
                             </label>
-
-                            <div class="flex-1 space-y-3">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <input type="text" id="inputBrand" placeholder="브랜드 (Brand)" class="pixel-input w-full p-2">
-                                    <input type="text" id="inputName" placeholder="제품명 (Name)" class="pixel-input w-full p-2">
-                                </div>
-                                <div class="flex gap-2">
-                                    <input type="color" id="inputHex" class="h-10 w-10 border-2 border-gray-800 p-0 cursor-pointer" value="#ff0000">
-                                    <input type="text" id="inputColorName" placeholder="컬러명" class="pixel-input w-full p-2">
-                                </div>
-                                <div class="flex gap-2">
-                                    <select id="inputPersonalColor" class="pixel-input w-full p-2">
-                                        <option value="" disabled selected>🎨 퍼스널 컬러 선택</option>
-                                        <option value="봄 웜 라이트">🌸 봄 웜 라이트</option>
-                                        <option value="봄 웜 브라이트">🌺 봄 웜 브라이트</option>
-                                        <option value="여름 쿨 라이트">🍧 여름 쿨 라이트</option>
-                                        <option value="여름 쿨 브라이트">🍉 여름 쿨 브라이트</option>
-                                        <option value="여름 쿨 뮤트">🌫️ 여름 쿨 뮤트</option>
-                                        <option value="가을 웜 뮤트">🍂 가을 웜 뮤트</option>
-                                        <option value="가을 웜 딥">🍁 가을 웜 딥</option>
-                                        <option value="가을 웜 다크">☕ 가을 웜 다크</option>
-                                        <option value="겨울 쿨 브라이트">🍒 겨울 쿨 브라이트</option>
-                                        <option value="겨울 쿨 딥">🍷 겨울 쿨 딥</option>
-                                        <option value="겨울 쿨 다크">🖤 겨울 쿨 다크</option>
-                                        <option value="잘 모름">🤔 잘 모르겠음</option>
-                                    </select>
-                                    <button id="addBtn" class="pixel-btn px-6 py-2 font-bold whitespace-nowrap hover:bg-rose-300">저장</button>
-                                </div>
+                        </div>
+                        <div class="md:col-span-3 space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" id="inputBrand" placeholder="브랜드 (예: 롬앤)" class="input-field">
+                                <input type="text" id="inputName" placeholder="제품명" class="input-field">
+                            </div>
+                            <div class="flex gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                <input type="color" id="inputHex" class="h-10 w-10 rounded-lg cursor-pointer border border-slate-200" value="#ff0000">
+                                <input type="text" id="inputColorName" placeholder="컬러명" class="w-full bg-transparent text-sm font-medium outline-none">
+                            </div>
+                            <div class="flex gap-2">
+                                <select id="inputPersonalColor" class="input-field bg-white">
+                                    <option value="" disabled selected>🎨 퍼스널 컬러 선택</option>
+                                    <option value="봄 웜 라이트">🌸 봄 웜 라이트</option>
+                                    <option value="봄 웜 브라이트">🌺 봄 웜 브라이트</option>
+                                    <option value="여름 쿨 라이트">🍧 여름 쿨 라이트</option>
+                                    <option value="여름 쿨 브라이트">🍉 여름 쿨 브라이트</option>
+                                    <option value="여름 쿨 뮤트">🌫️ 여름 쿨 뮤트</option>
+                                    <option value="가을 웜 뮤트">🍂 가을 웜 뮤트</option>
+                                    <option value="가을 웜 딥">🍁 가을 웜 딥</option>
+                                    <option value="가을 웜 다크">☕ 가을 웜 다크</option>
+                                    <option value="겨울 쿨 브라이트">🍒 겨울 쿨 브라이트</option>
+                                    <option value="겨울 쿨 딥">🍷 겨울 쿨 딥</option>
+                                    <option value="겨울 쿨 다크">🖤 겨울 쿨 다크</option>
+                                    <option value="잘 모름">🤔 잘 모르겠음</option>
+                                </select>
+                                <button id="addBtn" class="w-24 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition shadow-lg shadow-rose-200">등록</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section id="view-list" class="hidden fade-in h-full flex flex-col">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl">👜 MY POUCH</h2>
-                    <div class="flex gap-2">
-                        <button onclick="filterBy('all')" class="filter-chip active">ALL</button>
-                        <button onclick="filterBy('봄')" class="filter-chip">봄</button>
-                        <button onclick="filterBy('여름')" class="filter-chip">여름</button>
-                        <button onclick="filterBy('가을')" class="filter-chip">가을</button>
-                        <button onclick="filterBy('겨울')" class="filter-chip">겨울</button>
+            <section id="view-list" class="hidden fade-in">
+                <div class="sticky top-0 bg-white/95 backdrop-blur-sm pb-4 z-20 border-b border-slate-100 mb-6">
+                    <div class="flex justify-between items-end">
+                        <h2 class="text-2xl font-bold">내 파우치</h2>
+                        <div class="flex gap-2">
+                            <button onclick="filterBy('all')" class="filter-chip active" id="filter-all">전체</button>
+                            <button onclick="filterBy('봄')" class="filter-chip" id="filter-spring">봄</button>
+                            <button onclick="filterBy('여름')" class="filter-chip" id="filter-summer">여름</button>
+                            <button onclick="filterBy('가을')" class="filter-chip" id="filter-autumn">가을</button>
+                            <button onclick="filterBy('겨울')" class="filter-chip" id="filter-winter">겨울</button>
+                        </div>
                     </div>
                 </div>
-                <div id="lipstickGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pr-2 pb-20">
-                    </div>
+                <div id="lipstickGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20"></div>
             </section>
 
-            <section id="view-analyze" class="hidden fade-in h-full flex flex-col items-center justify-center text-center">
-                <div class="border-2 border-gray-800 p-8 rounded-xl bg-yellow-50 shadow-[8px_8px_0px_#000] max-w-lg w-full">
-                    <h2 class="text-2xl mb-4">🤖 분석 & 기록</h2>
-                    <div id="analysisText" class="text-lg mb-8 bg-white p-4 border border-gray-300 rounded">
-                        데이터가 부족해요!
+            <section id="view-analyze" class="hidden fade-in max-w-3xl mx-auto text-center pt-10">
+                <h2 class="text-2xl font-bold mb-2">분석 & 기록</h2>
+                <p class="text-slate-400 mb-10">내 화장품 데이터를 분석하고 영수증으로 남겨보세요.</p>
+
+                <div class="bg-gradient-to-br from-rose-50 to-purple-50 p-8 rounded-3xl border border-rose-100 mb-8 shadow-sm">
+                    <div id="analysisText" class="text-lg leading-relaxed text-slate-700">
+                        데이터가 충분하지 않아요! 립스틱을 더 등록해주세요. 🧐
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <button id="downloadBtn" class="bg-white border-2 border-gray-800 p-3 hover:bg-gray-100">💾 백업 저장</button>
-                        <label class="bg-white border-2 border-gray-800 p-3 hover:bg-gray-100 cursor-pointer block">
-                            📂 불러오기 <input type="file" id="csvUpload" accept=".csv" class="hidden">
-                        </label>
-                        <button id="sampleBtn" class="bg-white border-2 border-gray-800 p-3 hover:bg-gray-100">🎁 샘플 추가</button>
-                        <button id="resetBtn" class="bg-red-100 border-2 border-gray-800 p-3 hover:bg-red-200 text-red-600">🔥 초기화</button>
+                </div>
+
+                <div class="border-2 border-dashed border-slate-200 rounded-3xl p-10 flex flex-col items-center gap-4 hover:border-rose-300 transition group cursor-pointer" onclick="alert('영수증 발급 기능은 곧 업데이트 됩니다! 🧾')">
+                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center group-hover:bg-rose-100 transition">
+                        <i data-lucide="receipt" class="w-8 h-8 text-slate-400 group-hover:text-rose-500 transition"></i>
                     </div>
+                    <div>
+                        <h3 class="font-bold text-slate-600">내 파우치 영수증 뽑기</h3>
+                        <p class="text-xs text-slate-400 mt-1">인스타그램 공유용 이미지를 만들어드려요</p>
+                    </div>
+                </div>
+                
+                <div class="mt-12 flex justify-center gap-4 text-xs text-slate-400">
+                    <button id="downloadBtn" class="hover:text-slate-600 underline">데이터 백업</button>
+                    <span>|</span>
+                    <label class="cursor-pointer hover:text-slate-600 underline">
+                        가져오기 <input type="file" id="csvUpload" accept=".csv" class="hidden">
+                    </label>
+                    <span>|</span>
+                    <button id="sampleBtn" class="hover:text-slate-600 underline">샘플 추가</button>
+                    <span>|</span>
+                    <button id="resetBtn" class="hover:text-red-400 underline">초기화</button>
                 </div>
             </section>
 
-            <section id="view-deco" class="hidden fade-in h-full flex flex-col items-center justify-center">
-                <div class="text-6xl animate-bounce mb-4">🚧</div>
-                <h2 class="text-2xl">준비중입니다!</h2>
-                <p class="text-gray-500 mt-2">나만의 화장대를 꾸미는 기능이 곧 오픈됩니다.</p>
+            <section id="view-deco" class="hidden fade-in h-full flex flex-col items-center justify-center text-center pb-20">
+                <div class="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                    <i data-lucide="cone" class="w-10 h-10 text-yellow-500"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">공사중입니다!</h2>
+                <p class="text-slate-400">픽셀 화장품으로 나만의 화장대를<br>꾸미는 기능이 곧 추가될 거예요.</p>
             </section>
 
-        </main>
-    </div>
+        </div>
+    </main>
 
     <script>
         function switchTab(tabName) {
+            // 모든 섹션 숨기기 & 탭 비활성화
             ['home', 'list', 'analyze', 'deco'].forEach(name => {
-                document.getElementById('view-' + name).classList.add('hidden');
-                document.getElementById('tab-' + name).classList.remove('active');
+                const view = document.getElementById('view-' + name);
+                const btn = document.getElementById('tab-' + name);
+                if (view) view.classList.add('hidden');
+                if (btn) btn.classList.remove('active');
             });
+            
+            // 선택된 섹션 보이기 & 탭 활성화
             document.getElementById('view-' + tabName).classList.remove('hidden');
             document.getElementById('tab-' + tabName).classList.add('active');
-            if(tabName === 'home') setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+
+            // 차트 리사이즈 트리거
+            if(tabName === 'home') {
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+            }
         }
     </script>
 
