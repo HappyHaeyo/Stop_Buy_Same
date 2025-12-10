@@ -3,161 +3,140 @@
 
 body {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-    background-color: #F1F1F2; /* 요청된 배경색 */
+    /* PC 배경 고정 (스크롤해도 배경은 가만히) */
+    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    background-attachment: fixed;
     color: #4b5563;
-    overflow: hidden; /* 전체 스크롤 방지 -> 메인 영역만 스크롤 */
-    margin: 0;
-    display: flex;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 /* 🖱️ 예쁜 커스텀 스크롤바 */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
 }
-::-webkit-scrollbar-track { background: transparent; }
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
 ::-webkit-scrollbar-thumb {
-    background: #d1d5db; 
+    background: #d1d5db;
     border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
-/* 유틸리티 */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-.hidden-tab { display: none !important; }
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
 
-/* 사이드바 */
-.sidebar {
-    background-color: #E7BCD2; /* 요청된 사이드바 색상 */
-    width: 100px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 2rem;
-    gap: 1.5rem;
-    position: relative;
+/* 유틸리티: 스크롤바 숨기기 (가로 스크롤 메뉴용) */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.hidden-tab {
+    display: none !important;
+}
+
+/* 헤더: 핑크색 적용 (#E7BCD2) */
+.glass-header {
+    background: rgba(231, 188, 210, 0.95);
+    /* #E7BCD2 */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
     z-index: 50;
-    box-shadow: 4px 0 15px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 15px rgba(231, 188, 210, 0.3);
 }
 
-.tab-btn {
-    width: 50px;
-    height: 50px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    opacity: 0.6;
-    object-fit: contain;
-    border-radius: 12px;
-}
-.tab-btn:hover { transform: scale(1.1); opacity: 0.9; }
-.tab-btn.active { 
-    opacity: 1; 
-    transform: scale(1.1); 
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-    background: rgba(255,255,255,0.2);
-}
-
-/* 메인 컨텐츠 영역 */
-.main-content {
-    flex: 1;
-    height: 100vh;
-    overflow-y: auto;
-    position: relative;
-    padding: 0 0 4rem 0;
-}
-
-.content-wrapper {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 2rem;
-}
-
-/* 헤더 박스 */
-.app-header {
-    margin-bottom: 2rem;
-    padding-left: 0.5rem;
-}
-.app-title {
-    background-color: #E7BCD2;
-    color: #852438;
-    display: inline-block;
-    padding: 0.5rem 1.5rem;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 1.1rem;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-/* 대시보드 그리드 레이아웃 */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-@media (max-width: 1024px) {
-    .dashboard-grid { grid-template-columns: 1fr; }
-}
-
-/* 공통 카드 스타일 */
-.pink-card {
-    background: white;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+/* 사이드바 - max-w-7xl 컨테이너와 정렬 */
+.sidebar {
+    position: fixed;
+    top: 100px;
+    /* 헤더(약 60px) + 여유 마진 */
+    /* calc: 뷰포트 중앙에서 max-w-7xl(1280px)/2 만큼 왼쪽으로 가고, 추가로 100px 왼쪽으로 */
+    left: calc(50% - 640px - 90px);
+    width: 80px;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    border: 1px solid white;
+    gap: 12px;
+    z-index: 40;
 }
 
-.pink-title-bar {
-    background-color: #E7BCD2;
-    padding: 12px 20px;
+/* 반응형: 화면이 작을 때 사이드바 왼쪽 고정 */
+@media (max-width: 1400px) {
+    .sidebar {
+        left: 15px;
+    }
+}
+
+/* 탭 아이템 (이미지 + 라벨) */
+.tab-item {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.tab-item:hover {
+    transform: scale(1.05);
+}
+
+.tab-item.active .tab-btn {
+    filter: drop-shadow(0 0 6px rgba(231, 188, 210, 0.8));
+}
+
+/* 탭 아이콘 이미지 */
+.tab-btn {
+    width: 55px;
+    height: 55px;
+    object-fit: contain;
+}
+
+/* 탭 라벨 */
+.tab-label {
+    font-size: 10px;
+    font-weight: 600;
     color: #852438;
-    font-weight: bold;
+    margin-top: 2px;
+    text-align: center;
 }
 
-.card-body {
-    padding: 1.5rem;
-    flex: 1;
-    position: relative;
+/* 카드 디자인: PC 화면에서 더 예쁜 그림자 */
+.bg-white {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.01);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* 폼 스타일 */
+/* 입력 필드 */
 .input-field {
     width: 100%;
     padding: 12px 16px;
     border-radius: 12px;
-    background-color: #F8F9FA;
-    border: 1px solid #E9ECEF;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
     font-size: 14px;
     outline: none;
     transition: all 0.2s ease;
     color: #374151;
 }
+
 .input-field:focus {
     background-color: white;
-    border-color: #E7BCD2;
-    box-shadow: 0 0 0 3px rgba(231, 188, 210, 0.25);
+    border-color: #f43f5e;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
 }
 
-.register-btn {
-    background-color: #FF5A78;
-    color: white;
-    font-weight: bold;
-    border-radius: 12px;
-    transition: background 0.2s;
-}
-.register-btn:hover { background-color: #FF2F55; }
-
-/* 리스트 뷰 및 필터 */
+/* 필터 칩 버튼 */
 .filter-chip {
     padding: 8px 18px;
     border-radius: 100px;
@@ -166,36 +145,49 @@ body {
     color: #6b7280;
     font-size: 13px;
     font-weight: 600;
-    cursor: pointer;
+    white-space: nowrap;
     transition: all 0.2s;
+    cursor: pointer;
 }
+
 .filter-chip:hover {
     background-color: #f3f4f6;
     transform: translateY(-1px);
 }
+
 .filter-chip.active {
-    background: #FF5A78; /* 활성 상태 좀 더 진핑크 */
+    background: #1f2937;
     color: white;
-    border-color: #FF5A78;
-    box-shadow: 0 2px 5px rgba(255, 90, 120, 0.3);
+    border-color: #1f2937;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.item-card {
-    background: white;
-    border-radius: 16px;
-    padding: 1rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-    border: 1px solid transparent;
-    transition: transform 0.2s;
-}
-.item-card:hover {
-    transform: translateY(-3px);
-    border-color: #E7BCD2;
+/* 컬러칩 테두리 */
+.color-swatch {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid white;
 }
 
 /* 애니메이션 */
-.fade-in { animation: fadeIn 0.4s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in {
+    animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
-/* 커서 */
-button, label, select { cursor: pointer; }
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 커서 설정 */
+button,
+label,
+select {
+    cursor: pointer;
+}

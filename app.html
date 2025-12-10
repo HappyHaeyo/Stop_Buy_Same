@@ -4,222 +4,499 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smart Lip Collector</title>
+    <title>하늘 아래 같은 색조 없다</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="text-slate-800 pb-24">
 
-    <!-- 사이드바 -->
+    <!-- 사이드바 (라벨 포함) -->
     <aside class="sidebar">
-        <!-- 탭 버튼들: 이미지로 변경 가능하도록 img 태그 사용 -->
-        <img id="tab-btn-home" src="assets/tab_home.png" alt="Home" class="tab-btn active"
-            onerror="this.src='https://placehold.co/60x60/E7BCD2/FFF?text=HOME'">
-        <img id="tab-btn-list" src="assets/tab_list.png" alt="List" class="tab-btn"
-            onerror="this.src='https://placehold.co/60x60/E7BCD2/FFF?text=LIST'">
-        <img id="tab-btn-analysis" src="assets/tab_analysis.png" alt="Analysis" class="tab-btn"
-            onerror="this.src='https://placehold.co/60x60/E7BCD2/FFF?text=ANLY'">
-        <img id="tab-btn-deco" src="assets/tab_deco.png" alt="Deco" class="tab-btn"
-            onerror="this.src='https://placehold.co/60x60/E7BCD2/FFF?text=DECO'">
+        <div class="tab-item active" data-tab="home">
+            <img src="assets/tab_home.png" alt="Home" class="tab-btn">
+            <span class="tab-label">HOME</span>
+        </div>
+        <div class="tab-item" data-tab="list">
+            <img src="assets/tab_list.png" alt="List" class="tab-btn">
+            <span class="tab-label">LIST</span>
+        </div>
+        <div class="tab-item" data-tab="analysis">
+            <img src="assets/tab_analysis.png" alt="Analysis" class="tab-btn">
+            <span class="tab-label">분석하기</span>
+        </div>
+        <div class="tab-item" data-tab="deco">
+            <img src="assets/tab_deco.png" alt="Deco" class="tab-btn">
+            <span class="tab-label">DECO</span>
+        </div>
+        <div class="tab-item" data-tab="play">
+            <img src="assets/tab_play.png" alt="Play" class="tab-btn">
+            <span class="tab-label">PLAY</span>
+        </div>
     </aside>
 
-    <!-- 메인 컨텐츠 -->
-    <main class="main-content">
-        <div class="content-wrapper">
+    <header class="glass-header fixed top-0 w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div>
+                <h1 class="text-lg font-bold text-rose-950 tracking-tight">Smart Lip Collector</h1>
+                <p class="text-xs text-rose-400 font-medium">AI 컬러 분석기</p>
+            </div>
+            <div class="text-xs font-medium bg-rose-100 text-rose-600 px-3 py-1 rounded-full">
+                <span id="headerTotalCount">0</span> items
+            </div>
+        </div>
+    </header>
 
-            <!-- 공통 헤더 -->
-            <header class="app-header flex justify-between items-center">
-                <div>
-                    <div class="app-title">
-                        Smart Lip Collector
+    <!-- 메인 콘텐츠: 헤더와 더 많은 마진 (pt-32 = 128px) -->
+    <main class="max-w-7xl mx-auto px-4 pt-32 pb-20">
+
+        <!-- 🏠 HOME 탭 -->
+        <div id="view-home" class="fade-in">
+            <div id="analysisSection" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 hidden">
+
+                <!-- 1. 보유 현황 통계 -->
+                <div class="bg-white rounded-3xl shadow-sm border border-rose-100 flex flex-col h-full overflow-hidden">
+                    <div class="bg-[#E7BCD2] px-6 py-4 border-b border-rose-100/50">
+                        <h2 class="text-lg font-bold flex items-center gap-2 text-[#852438]">
+                            <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#852438]"></i>
+                            보유 현황 통계
+                        </h2>
                     </div>
-                    <p class="text-xs text-rose-400 font-medium ml-1 mt-1">AI 컬러 분석기</p>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <div class="relative w-full h-80">
+                            <canvas id="personalColorChart"></canvas>
+                        </div>
+                        <div
+                            class="bg-slate-50 rounded-xl p-4 text-sm leading-relaxed border border-slate-100 mt-4 flex-1 flex items-center justify-center">
+                            <p id="analysisText" class="text-slate-700 text-center">데이터를 불러오는 중...</p>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- 2. 컬러 맵 -->
                 <div
-                    class="bg-white px-3 py-1 rounded-full text-xs font-bold text-rose-500 shadow-sm border border-rose-100">
-                    Total <span id="headerTotalCount">0</span>
-                </div>
-            </header>
-
-            <!-- 🏠 VIEW: HOME (대시보드) -->
-            <div id="view-home" class="fade-in">
-
-                <div id="analysisSection" class="dashboard-grid">
-                    <!-- 1. 보유 현황 통계 -->
-                    <div class="pink-card">
-                        <div class="pink-title-bar">
-                            <span class="flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4"></i> 보유
-                                현황 통계</span>
-                        </div>
-                        <div class="card-body flex flex-col justify-between">
-                            <div class="relative w-full h-64">
-                                <canvas id="personalColorChart"></canvas>
-                            </div>
-                            <div
-                                class="bg-slate-50 rounded-xl p-3 text-sm leading-relaxed border border-slate-100 mt-2 text-center">
-                                <p id="analysisText" class="text-slate-700">데이터를 불러오는 중...</p>
-                            </div>
+                    class="bg-white rounded-3xl shadow-sm border border-rose-100 flex flex-col h-full relative overflow-hidden">
+                    <div
+                        class="bg-[#E7BCD2] px-6 py-4 border-b border-rose-100/50 flex justify-between items-center z-10">
+                        <h2 class="text-lg font-bold flex items-center gap-2 text-[#852438]">
+                            <i data-lucide="crosshair" class="w-5 h-5 text-[#852438]"></i>
+                            컬러 맵 (Color Map)
+                        </h2>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-[#852438] bg-white/40 px-2 py-1 rounded-full font-bold">Light
+                                / Deep / Warm / Cool</span>
+                            <button onclick="toggleChartFullScreen()"
+                                class="p-1.5 bg-white/50 hover:bg-white rounded-lg text-[#852438] transition">
+                                <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                            </button>
                         </div>
                     </div>
-
-                    <!-- 2. 컬러 맵 -->
-                    <div class="pink-card relative">
-                        <div class="pink-title-bar">
-                            <span class="flex items-center gap-2"><i data-lucide="crosshair" class="w-4 h-4"></i> 컬러 맵
-                                (Color Map)</span>
-                            <span class="text-[10px] bg-white/30 px-2 py-0.5 rounded-full text-white">Light / Deep /
-                                Warm / Cool</span>
-                        </div>
-                        <div class="card-body p-0 relative bg-slate-50/30">
-                            <!-- 배경 그리드 라인 -->
-                            <div
-                                class="absolute inset-0 pointer-events-none flex flex-col justify-center items-center opacity-30">
-                                <div class="w-full h-px bg-rose-400 absolute top-1/2"></div>
-                                <div class="h-full w-px bg-rose-400 absolute left-1/2"></div>
+                    <div class="p-6 relative flex-1 flex flex-col">
+                        <div class="relative w-full flex-1 bg-slate-50/50 rounded-2xl border border-slate-100">
+                            <div class="absolute inset-0 pointer-events-none flex flex-col justify-center items-center">
+                                <div class="w-full h-px bg-rose-200/50 absolute top-1/2"></div>
+                                <div class="h-full w-px bg-rose-200/50 absolute left-1/2"></div>
+                                <div class="absolute top-4 left-4 text-lg font-bold text-orange-300/60">Spring</div>
+                                <div class="absolute top-4 right-4 text-lg font-bold text-purple-300/60">Summer</div>
+                                <div class="absolute bottom-4 left-4 text-lg font-bold text-amber-600/40">Autumn</div>
+                                <div class="absolute bottom-4 right-4 text-lg font-bold text-rose-700/40">Winter</div>
                             </div>
-                            <!-- 사분면 라벨 -->
-                            <div class="absolute inset-0 pointer-events-none p-4">
-                                <div class="text-xs font-bold text-orange-400/70 absolute top-16 left-6">Spring</div>
-                                <div class="text-xs font-bold text-purple-400/70 absolute top-16 right-6">Summer</div>
-                                <div class="text-xs font-bold text-amber-700/50 absolute bottom-6 left-6">Autumn</div>
-                                <div class="text-xs font-bold text-rose-800/50 absolute bottom-6 right-6">Winter</div>
-                            </div>
-                            <!-- 차트 캔버스 -->
-                            <div class="relative w-full h-full min-h-[300px]">
+                            <div class="absolute inset-0 z-10">
                                 <canvas id="scatterChart"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- 3. 새 립스틱 등록 -->
-                <div class="pink-card mt-6">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-orange-400"></div>
-                    <div class="p-6">
-                        <h3 class="text-sm font-bold mb-4 text-slate-700 flex items-center gap-2">
-                            <i data-lucide="sparkles" class="w-4 h-4 text-yellow-500"></i> 새 립스틱 등록
-                        </h3>
+            <!-- 새 립스틱 등록 -->
+            <div class="bg-white p-6 rounded-3xl shadow-lg border border-rose-100 mb-8 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-orange-400"></div>
+                <h3 class="text-sm font-bold mb-4 text-slate-700 flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-yellow-500"></i> 새 립스틱 등록
+                </h3>
 
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <!-- 이미지 업로드 영역 -->
-                            <div class="md:col-span-1">
-                                <label
-                                    class="block w-full h-32 md:h-full border-2 border-dashed border-rose-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-rose-50 transition relative overflow-hidden group min-h-[140px]">
-                                    <img id="imagePreview"
-                                        class="absolute inset-0 w-full h-full object-cover hidden opacity-80">
-                                    <div class="text-center z-10 p-2 bg-white/80 rounded-xl backdrop-blur-sm">
-                                        <i data-lucide="camera" class="w-6 h-6 text-rose-400 mx-auto mb-1"></i>
-                                        <span class="text-xs text-slate-500 font-medium">색상 추출</span>
-                                    </div>
-                                    <input type="file" id="imageInput" accept="image/*" class="hidden">
-                                </label>
+                <!-- 🚫 중복 경고 메시지 -->
+                <div id="duplicateWarning" class="hidden mb-4 animate-fade-in-down"></div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="md:col-span-1">
+                        <label
+                            class="block w-full h-32 md:h-full border-2 border-dashed border-rose-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-rose-50 transition relative overflow-hidden group min-h-[160px]">
+                            <img id="imagePreview"
+                                class="absolute inset-0 w-full h-full object-cover hidden opacity-80">
+                            <div class="text-center z-10 p-2 bg-white/80 rounded-xl backdrop-blur-sm">
+                                <i data-lucide="camera" class="w-6 h-6 text-rose-400 mx-auto mb-1"></i>
+                                <span class="text-xs text-slate-500 font-medium">색상 추출</span>
                             </div>
-
-                            <!-- 입력 폼 영역 -->
-                            <div class="md:col-span-3 space-y-3">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <input type="text" id="inputBrand" placeholder="브랜드 (예: 롬앤)" class="input-field">
-                                    <input type="text" id="inputName" placeholder="제품명" class="input-field">
-                                </div>
-
-                                <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-slate-200">
-                                    <input type="color" id="inputHex"
-                                        class="h-10 w-10 rounded cursor-pointer border-0 bg-transparent flex-none"
-                                        value="#ff0000">
-                                    <div class="flex-1 min-w-0">
-                                        <input type="text" id="inputColorName" placeholder="컬러명 (예: 베어그레이프)"
-                                            class="w-full bg-transparent text-sm font-medium outline-none text-slate-700">
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div class="col-span-2 relative">
-                                        <select id="inputPersonalColor" class="input-field appearance-none bg-white">
-                                            <option value="" disabled selected>🎨 퍼스널 컬러 (자동 추천됨)</option>
-                                            <option value="봄 웜 라이트">🌸 봄 웜 라이트</option>
-                                            <option value="봄 웜 브라이트">🌺 봄 웜 브라이트</option>
-                                            <option value="여름 쿨 라이트">🍧 여름 쿨 라이트</option>
-                                            <option value="여름 쿨 브라이트">🍉 여름 쿨 브라이트</option>
-                                            <option value="여름 쿨 뮤트">🌫️ 여름 쿨 뮤트</option>
-                                            <option value="가을 웜 뮤트">🍂 가을 웜 뮤트</option>
-                                            <option value="가을 웜 딥">🍁 가을 웜 딥</option>
-                                            <option value="가을 웜 다크">☕ 가을 웜 다크</option>
-                                            <option value="겨울 쿨 브라이트">🍒 겨울 쿨 브라이트</option>
-                                            <option value="겨울 쿨 딥">🍷 겨울 쿨 딥</option>
-                                            <option value="겨울 쿨 다크">🖤 겨울 쿨 다크</option>
-                                            <option value="잘 모름">🤔 잘 모르겠음</option>
-                                        </select>
-                                        <i data-lucide="chevron-down"
-                                            class="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"></i>
-                                    </div>
-                                    <button id="addBtn" class="register-btn col-span-1 py-3 text-sm shadow-md">
-                                        등록
-                                    </button>
-                                </div>
+                            <input type="file" id="imageInput" accept="image/*" class="hidden">
+                        </label>
+                    </div>
+                    <div class="md:col-span-3 space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="inputBrand" placeholder="브랜드 (예: 롬앤)" class="input-field">
+                            <input type="text" id="inputName" placeholder="제품명" class="input-field">
+                        </div>
+                        <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-200">
+                            <input type="color" id="inputHex"
+                                class="h-10 w-10 rounded cursor-pointer border-0 bg-transparent flex-none"
+                                value="#ff0000">
+                            <div class="flex-1 min-w-0">
+                                <input type="text" id="inputColorName" placeholder="컬러명 (예: 베어그레이프)"
+                                    class="w-full bg-transparent text-sm font-medium outline-none text-slate-700">
                             </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="col-span-2 relative">
+                                <select id="inputPersonalColor" class="input-field appearance-none bg-white">
+                                    <option value="" disabled selected>🎨 퍼스널 컬러 (자동 추천됨)</option>
+                                    <option value="봄 웜 라이트">🌸 봄 웜 라이트</option>
+                                    <option value="봄 웜 브라이트">🌺 봄 웜 브라이트</option>
+                                    <option value="여름 쿨 라이트">🍧 여름 쿨 라이트</option>
+                                    <option value="여름 쿨 브라이트">🍉 여름 쿨 브라이트</option>
+                                    <option value="여름 쿨 뮤트">🌫️ 여름 쿨 뮤트</option>
+                                    <option value="가을 웜 뮤트">🍂 가을 웜 뮤트</option>
+                                    <option value="가을 웜 딥">🍁 가을 웜 딥</option>
+                                    <option value="가을 웜 다크">☕ 가을 웜 다크</option>
+                                    <option value="겨울 쿨 브라이트">🍒 겨울 쿨 브라이트</option>
+                                    <option value="겨울 쿨 딥">🍷 겨울 쿨 딥</option>
+                                    <option value="겨울 쿨 다크">🖤 겨울 쿨 다크</option>
+                                    <option value="잘 모름">🤔 잘 모르겠음</option>
+                                </select>
+                                <i data-lucide="chevron-down"
+                                    class="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                            </div>
+                            <div class="relative">
+                                <select id="inputTexture" class="input-field appearance-none bg-white">
+                                    <option value="">✨ 제형</option>
+                                    <option value="매트">☁️ 매트</option>
+                                    <option value="글로우">💧 글로우</option>
+                                    <option value="글리터">✨ 글리터</option>
+                                </select>
+                                <i data-lucide="chevron-down"
+                                    class="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                            </div>
+                            <button id="addBtn"
+                                class="col-span-1 py-3 bg-rose-500 text-white rounded-xl text-sm font-bold shadow-md hover:bg-rose-600 transition">
+                                등록
+                            </button>
                         </div>
                     </div>
                 </div>
-            </div> <!-- End of Home View -->
+            </div>
+        </div>
 
+        <!-- 💄 LIST 탭 -->
+        <div id="view-list" class="hidden-tab fade-in">
+            <!-- 🔍 검색창 추가 -->
+            <div class="mb-4">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                    <input type="text" id="searchInput" placeholder="브랜드, 제품명, 컬러명으로 검색..."
+                        class="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-200 bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 outline-none transition text-sm">
+                </div>
+            </div>
 
-            <!-- 💄 VIEW: LIST (내 파우치) -->
-            <div id="view-list" class="hidden-tab fade-in">
+            <div class="sticky top-[60px] z-40 bg-[#FDFBF7] pb-4 pt-2">
+                <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar justify-center">
+                    <button onclick="filterBy('all')" class="filter-chip active" id="filter-all">전체</button>
+                    <button onclick="filterBy('봄')" class="filter-chip" id="filter-spring">봄웜</button>
+                    <button onclick="filterBy('여름')" class="filter-chip" id="filter-summer">여름쿨</button>
+                    <button onclick="filterBy('가을')" class="filter-chip" id="filter-autumn">가을웜</button>
+                    <button onclick="filterBy('겨울')" class="filter-chip" id="filter-winter">겨울쿨</button>
+                </div>
+            </div>
+            <div id="lipstickGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12"></div>
+            <div class="flex justify-center gap-4 mb-20 text-xs text-stone-400">
+                <button id="downloadBtn" class="hover:text-stone-600 underline">데이터 백업</button>
+                <span>|</span>
+                <label class="cursor-pointer hover:text-stone-600 underline">
+                    가져오기
+                    <input type="file" id="csvUpload" accept=".csv" class="hidden">
+                </label>
+                <span>|</span>
+                <button id="sampleBtn" class="hover:text-stone-600 underline">샘플 추가</button>
+                <span>|</span>
+                <button id="resetBtn" class="hover:text-red-400 underline">초기화</button>
+            </div>
+        </div>
 
-                <div class="sticky top-0 z-40 bg-[#F1F1F2] pb-4 pt-2">
-                    <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                        <button onclick="filterBy('all')" class="filter-chip active" id="filter-all">전체</button>
-                        <button onclick="filterBy('봄')" class="filter-chip" id="filter-spring">봄웜</button>
-                        <button onclick="filterBy('여름')" class="filter-chip" id="filter-summer">여름쿨</button>
-                        <button onclick="filterBy('가을')" class="filter-chip" id="filter-autumn">가을웜</button>
-                        <button onclick="filterBy('겨울')" class="filter-chip" id="filter-winter">겨울쿨</button>
+        <!-- 📊 분석하기 탭 -->
+        <div id="view-analysis" class="hidden-tab fade-in">
+            <h2 class="text-2xl font-bold text-rose-950 mb-6 flex items-center gap-2">
+                <i data-lucide="pie-chart" class="w-6 h-6 text-rose-400"></i> 내 파우치 분석
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- 1. 최애 퍼스널 컬러 -->
+                <div
+                    class="bg-white p-6 rounded-3xl shadow-sm border border-rose-100 flex flex-col items-center text-center hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mb-3">
+                        <i data-lucide="palette" class="w-6 h-6 text-rose-500"></i>
+                    </div>
+                    <h3 class="text-stone-500 font-bold text-sm mb-1">가장 많은 톤</h3>
+                    <div id="stat-tone-val" class="text-xl font-bold text-rose-600 mb-1">-</div>
+                    <p id="stat-tone-desc" class="text-xs text-stone-400">데이터가 부족해요</p>
+                </div>
+
+                <!-- 2. 최애 브랜드 -->
+                <div
+                    class="bg-white p-6 rounded-3xl shadow-sm border border-rose-100 flex flex-col items-center text-center hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-3">
+                        <i data-lucide="shopping-bag" class="w-6 h-6 text-orange-500"></i>
+                    </div>
+                    <h3 class="text-stone-500 font-bold text-sm mb-1">최애 브랜드</h3>
+                    <div id="stat-brand-val" class="text-xl font-bold text-orange-600 mb-1">-</div>
+                    <p id="stat-brand-desc" class="text-xs text-stone-400">데이터가 부족해요</p>
+                </div>
+
+                <!-- 3. 제형 취향 -->
+                <div
+                    class="bg-white p-6 rounded-3xl shadow-sm border border-rose-100 flex flex-col items-center text-center hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+                        <i data-lucide="sparkles" class="w-6 h-6 text-purple-500"></i>
+                    </div>
+                    <h3 class="text-stone-500 font-bold text-sm mb-1">제형 취향</h3>
+                    <div id="stat-texture-val" class="text-xl font-bold text-purple-600 mb-1">-</div>
+                    <p id="stat-texture-desc" class="text-xs text-stone-400">글로우 vs 매트</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
+                <!-- 브랜드 차트 -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-stone-100">
+                    <h3 class="font-bold text-stone-700 mb-4 flex items-center gap-2">
+                        <i data-lucide="bar-chart" class="w-4 h-4 text-stone-400"></i> 브랜드 Top 5
+                    </h3>
+                    <div class="h-64">
+                        <canvas id="brandChart"></canvas>
                     </div>
                 </div>
 
-                <div id="lipstickGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-                    <!-- 아이템들이 여기 추가됨 -->
-                </div>
-
-                <!-- 하단 액션 버튼들 -->
-                <div class="flex justify-center gap-4 mb-20 text-xs text-stone-400 mt-8">
-                    <button id="downloadBtn" class="hover:text-stone-600 underline">데이터 백업</button>
-                    <span>|</span>
-                    <label class="cursor-pointer hover:text-stone-600 underline">
-                        가져오기
-                        <input type="file" id="csvUpload" accept=".csv" class="hidden">
-                    </label>
-                    <span>|</span>
-                    <button id="sampleBtn" class="hover:text-stone-600 underline">샘플 추가</button>
-                    <span>|</span>
-                    <button id="resetBtn" class="hover:text-red-400 underline">초기화</button>
-                </div>
-            </div> <!-- End of List View -->
-
-            <!-- 📊 VIEW: ANALYSIS (준비중) -->
-            <div id="view-analysis" class="hidden-tab fade-in flex items-center justify-center h-64">
-                <div class="text-center opacity-50">
-                    <i data-lucide="pie-chart" class="w-12 h-12 mx-auto mb-2 text-rose-300"></i>
-                    <p>상세 분석 기능이 곧 추가될 예정입니다.</p>
+                <!-- 제형 차트 -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-stone-100">
+                    <h3 class="font-bold text-stone-700 mb-4 flex items-center gap-2">
+                        <i data-lucide="activity" class="w-4 h-4 text-stone-400"></i> 글로우 vs 매트 비율
+                    </h3>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="textureChart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <!-- 🎀 VIEW: DECO (준비중) -->
-            <div id="view-deco" class="hidden-tab fade-in flex items-center justify-center h-64">
-                <div class="text-center opacity-50">
-                    <i data-lucide="sticker" class="w-12 h-12 mx-auto mb-2 text-rose-300"></i>
-                    <p>꾸미기 기능이 곧 추가될 예정입니다.</p>
+            <!-- 🛍️ 사기 전에 체크! -->
+            <div class="mt-12">
+                <h2 class="text-2xl font-bold text-rose-950 mb-6 flex items-center gap-2">
+                    <i data-lucide="shopping-cart" class="w-6 h-6 text-rose-400"></i> 사기 전에 체크!
+                </h2>
+
+                <div class="bg-white p-8 rounded-3xl shadow-lg border border-rose-100 mb-8">
+                    <div class="text-center mb-6">
+                        <p class="text-sm text-stone-600 mb-2">💡 <strong>사고 싶은 립스틱</strong> 사진을 올려보세요!</p>
+                        <p class="text-xs text-stone-400">비슷한 색이 이미 있는지 확인해드립니다.</p>
+                    </div>
+
+                    <!-- 이미지 업로드 -->
+                    <div class="flex justify-center mb-6">
+                        <label
+                            class="block w-64 h-64 border-2 border-dashed border-rose-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-rose-50 transition relative overflow-hidden group">
+                            <img id="checkImagePreview"
+                                class="absolute inset-0 w-full h-full object-cover hidden opacity-80">
+                            <div class="text-center z-10 p-4 bg-white/80 rounded-xl backdrop-blur-sm">
+                                <i data-lucide="camera" class="w-12 h-12 text-rose-400 mx-auto mb-2"></i>
+                                <span class="text-sm text-slate-700 font-medium">사진 올리기</span>
+                            </div>
+                            <input type="file" id="checkImageInput" accept="image/*" class="hidden">
+                        </label>
+                    </div>
+
+                    <!-- 색상 수동 입력 -->
+                    <div class="flex justify-center gap-4 items-center mb-6">
+                        <span class="text-sm text-stone-500">또는 색상 직접 선택:</span>
+                        <input type="color" id="checkColorInput"
+                            class="h-12 w-12 rounded-lg cursor-pointer border-2 border-stone-200" value="#ff0000">
+                        <button id="checkColorBtn"
+                            class="px-6 py-2 bg-rose-500 text-white rounded-xl text-sm font-bold shadow-md hover:bg-rose-600 transition">
+                            체크하기
+                        </button>
+                    </div>
+
+                    <!-- 결과 표시 영역 -->
+                    <div id="similarityResults" class="hidden">
+                        <div class="border-t border-stone-200 pt-6 mt-6">
+                            <h3 class="font-bold text-stone-700 mb-4 flex items-center gap-2">
+                                <i data-lucide="alert-circle" class="w-5 h-5 text-orange-500"></i> 비슷한 제품 발견!
+                            </h3>
+                            <div id="similarItemsList" class="space-y-3"></div>
+                        </div>
+                    </div>
+
+                    <!-- 없을 때 메시지 -->
+                    <div id="noSimilarMessage" class="hidden text-center py-8">
+                        <i data-lucide="check-circle" class="w-16 h-16 text-green-400 mx-auto mb-3"></i>
+                        <p class="text-lg font-bold text-green-600 mb-1">안심하세요! ✨</p>
+                        <p class="text-sm text-stone-500">비슷한 색상이 파우치에 없습니다.</p>
+                    </div>
                 </div>
             </div>
 
+
+            <!-- 🎲 립 추천기 -->
+            <div class="mt-12 mb-20">
+                <div class="bg-white rounded-3xl shadow-lg border border-rose-100 overflow-hidden">
+                    <!-- 타이틀바 -->
+                    <div class="bg-[#E7BCD2] px-6 py-4 border-b border-rose-100/50">
+                        <h2 class="text-lg font-bold flex items-center gap-2 text-[#852438]">
+                            <i data-lucide="shuffle" class="w-5 h-5 text-[#852438]"></i> 오늘의 립 추천
+                        </h2>
+                    </div>
+
+                    <!-- 콘텐츠 영역 -->
+                    <div class="p-8 text-center">
+                        <p class="text-stone-600 mb-6 font-medium">오늘 뭐 바를지 고민되나요? 제가 골라드릴게요! 😉</p>
+
+                        <div id="recommendDisplay"
+                            class="bg-white w-48 h-48 rounded-full mx-auto shadow-inner flex flex-col items-center justify-center border-4 border-rose-100 mb-6 relative overflow-hidden transition-all duration-300">
+                            <div id="recommendColor"
+                                class="absolute inset-0 bg-stone-200 transition-colors duration-200">
+                            </div>
+                            <div class="relative z-10 p-2">
+                                <h3 id="recommendBrand" class="text-sm font-bold text-stone-500 mb-1">Brand</h3>
+                                <p id="recommendName" class="text-lg font-bold text-stone-800 mb-1">???</p>
+                                <p id="recommendColorName" class="text-sm font-medium text-rose-600">-</p>
+                            </div>
+                        </div>
+
+                        <button onclick="recommendLip()"
+                            class="px-8 py-3 bg-rose-500 text-white rounded-full font-bold shadow-lg hover:bg-rose-600 hover:scale-105 transition active:scale-95 flex items-center gap-2 mx-auto">
+                            <i data-lucide="dices" class="w-5 h-5"></i> 골라줘!
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- 🎀 DECO 탭 -->
+        <div id="view-deco" class="hidden-tab fade-in flex items-center justify-center h-64">
+            <div class="text-center opacity-50">
+                <i data-lucide="sticker" class="w-12 h-12 mx-auto mb-2 text-rose-300"></i>
+                <p>꾸미기 기능이 곧 추가될 예정입니다.</p>
+            </div>
+        </div>
+
+        <!-- 💄 PLAY 탭 - 가상 립 체험 -->
+        <div id="view-play" class="hidden-tab fade-in">
+            <div class="bg-white rounded-3xl shadow-lg border border-rose-100 overflow-hidden">
+                <!-- 타이틀바 -->
+                <div class="bg-[#E7BCD2] px-6 py-4 border-b border-rose-100/50">
+                    <h2 class="text-lg font-bold flex items-center gap-2 text-[#852438]">
+                        <i data-lucide="camera" class="w-5 h-5 text-[#852438]"></i> 가상 립 체험
+                    </h2>
+                    <p class="text-xs text-[#852438]/70 mt-1">웹캠으로 립스틱 컬러를 미리 체험해보세요!</p>
+                </div>
+
+                <!-- 콘텐츠 영역 -->
+                <div class="p-6">
+                    <!-- 카메라 영역 -->
+                    <div
+                        class="relative mx-auto w-full max-w-xl aspect-[4/3] bg-stone-900 rounded-2xl overflow-hidden mb-6">
+                        <video id="webcamVideo" class="absolute inset-0 w-full h-full object-cover" autoplay playsinline
+                            muted></video>
+                        <canvas id="lipOverlayCanvas"
+                            class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+
+                        <!-- 로딩 상태 -->
+                        <div id="cameraLoading"
+                            class="absolute inset-0 flex flex-col items-center justify-center bg-stone-900 text-white">
+                            <i data-lucide="camera-off" class="w-16 h-16 mb-4 opacity-50"></i>
+                            <p class="text-sm opacity-70">카메라를 시작하려면 아래 버튼을 눌러주세요</p>
+                        </div>
+                    </div>
+
+                    <!-- 컨트롤 영역 -->
+                    <div class="flex flex-col sm:flex-row gap-4 items-center justify-center mb-6">
+                        <button id="startCameraBtn" onclick="startCamera()"
+                            class="px-6 py-3 bg-rose-500 text-white rounded-full font-bold shadow-lg hover:bg-rose-600 transition flex items-center gap-2">
+                            <i data-lucide="video" class="w-5 h-5"></i> 카메라 시작
+                        </button>
+                        <button id="stopCameraBtn" onclick="stopCamera()"
+                            class="px-6 py-3 bg-stone-400 text-white rounded-full font-bold shadow-lg hover:bg-stone-500 transition flex items-center gap-2 hidden">
+                            <i data-lucide="video-off" class="w-5 h-5"></i> 카메라 끄기
+                        </button>
+                    </div>
+
+                    <!-- 립 컬러 선택 -->
+                    <div class="border-t border-stone-100 pt-6">
+                        <h3 class="font-bold text-stone-700 mb-4 flex items-center gap-2">
+                            <i data-lucide="palette" class="w-5 h-5 text-rose-400"></i> 립스틱 선택
+                        </h3>
+                        <div id="lipColorGrid" class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-3">
+                            <!-- JS로 동적 생성 -->
+                        </div>
+                        <p id="noLipMessage" class="text-center text-stone-400 text-sm py-4 hidden">
+                            등록된 립스틱이 없습니다. 먼저 립스틱을 추가해주세요!
+                        </p>
+                    </div>
+
+                    <!-- 투명도 조절 -->
+                    <div class="mt-6 flex items-center gap-4">
+                        <label class="text-sm font-medium text-stone-600">투명도</label>
+                        <input type="range" id="lipOpacitySlider" min="0" max="100" value="60"
+                            class="flex-1 h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-rose-500">
+                        <span id="lipOpacityValue" class="text-sm font-bold text-rose-500 w-10">60%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script src="script.js"></script>
+    <script>
+        // 탭 전환 로직
+        document.querySelectorAll('.tab-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // 모든 탭 비활성화
+                document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden-tab'));
+
+                // 클릭된 탭 활성화
+                item.classList.add('active');
+                const tabName = item.dataset.tab;
+                const targetView = document.getElementById('view-' + tabName);
+                if (targetView) targetView.classList.remove('hidden-tab');
+
+                // Home 탭이면 차트 리렌더링
+                if (tabName === 'home') {
+                    setTimeout(() => {
+                        if (typeof updateAnalysis === 'function') updateAnalysis();
+                        if (typeof updateScatterChart === 'function') updateScatterChart();
+                    }, 50);
+                }
+
+                // Analysis 탭이면 상세 분석 업데이트
+                if (tabName === 'analysis') {
+                    setTimeout(() => {
+                        if (typeof updateDetailedAnalysis === 'function') updateDetailedAnalysis();
+                    }, 50);
+                }
+            });
+        });
+
+        // 🔍 검색 기능
+        document.getElementById('searchInput')?.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            // 현재 활성화된 필터 가져오기
+            const activeChip = document.querySelector('.filter-chip.active');
+            const currentFilter = activeChip?.id?.replace('filter-', '') || 'all';
+            const filterMap = { 'all': 'all', 'spring': '봄', 'summer': '여름', 'autumn': '가을', 'winter': '겨울' };
+            render(filterMap[currentFilter] || 'all', query);
+        });
+    </script>
 </body>
 
 </html>
