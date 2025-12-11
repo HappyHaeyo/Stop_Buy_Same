@@ -1,0 +1,193 @@
+/* 폰트: 프리텐다드 */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+
+body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    /* PC 배경 고정 (스크롤해도 배경은 가만히) */
+    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    background-attachment: fixed;
+    color: #4b5563;
+    min-height: 100vh;
+}
+
+/* 🖱️ 예쁜 커스텀 스크롤바 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* 유틸리티: 스크롤바 숨기기 (가로 스크롤 메뉴용) */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.hidden-tab {
+    display: none !important;
+}
+
+/* 헤더: 핑크색 적용 (#E7BCD2) */
+.glass-header {
+    background: rgba(231, 188, 210, 0.95);
+    /* #E7BCD2 */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    z-index: 50;
+    box-shadow: 0 4px 15px rgba(231, 188, 210, 0.3);
+}
+
+/* 사이드바 - max-w-7xl 컨테이너와 정렬 */
+.sidebar {
+    position: fixed;
+    top: 100px;
+    /* 헤더(약 60px) + 여유 마진 */
+    /* calc: 뷰포트 중앙에서 max-w-7xl(1280px)/2 만큼 왼쪽으로 가고, 추가로 100px 왼쪽으로 */
+    left: calc(50% - 640px - 90px);
+    width: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 40;
+}
+
+/* 반응형: 화면이 작을 때 사이드바 왼쪽 고정 */
+@media (max-width: 1400px) {
+    .sidebar {
+        left: 15px;
+    }
+}
+
+/* 탭 아이템 (이미지 + 라벨) */
+.tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.tab-item:hover {
+    transform: scale(1.05);
+}
+
+.tab-item.active .tab-btn {
+    filter: drop-shadow(0 0 6px rgba(231, 188, 210, 0.8));
+}
+
+/* 탭 아이콘 이미지 */
+.tab-btn {
+    width: 55px;
+    height: 55px;
+    object-fit: contain;
+}
+
+/* 탭 라벨 */
+.tab-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #852438;
+    margin-top: 2px;
+    text-align: center;
+}
+
+/* 카드 디자인: PC 화면에서 더 예쁜 그림자 */
+.bg-white {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.01);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* 입력 필드 */
+.input-field {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+    color: #374151;
+}
+
+.input-field:focus {
+    background-color: white;
+    border-color: #f43f5e;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
+}
+
+/* 필터 칩 버튼 */
+.filter-chip {
+    padding: 8px 18px;
+    border-radius: 100px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.filter-chip:hover {
+    background-color: #f3f4f6;
+    transform: translateY(-1px);
+}
+
+.filter-chip.active {
+    background: #1f2937;
+    color: white;
+    border-color: #1f2937;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* 컬러칩 테두리 */
+.color-swatch {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid white;
+}
+
+/* 애니메이션 */
+.fade-in {
+    animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 커서 설정 */
+button,
+label,
+select {
+    cursor: pointer;
+}
