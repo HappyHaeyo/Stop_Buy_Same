@@ -908,5 +908,301 @@ document.addEventListener('DOMContentLoaded', () => {
             valueLabel.textContent = `${e.target.value}%`;
         });
     }
+
+    // 머지 게임 초기화
+    initMergeGame();
+
+    // BGM 볼륨 초기화
+    const bgmAudio = document.getElementById('bgmAudio');
+    if (bgmAudio) bgmAudio.volume = 0.5;
 });
+
+// ==========================================
+// 🎵 BGM 컨트롤
+// ==========================================
+
+let isBGMPlaying = false;
+
+function toggleBGM() {
+    const audio = document.getElementById('bgmAudio');
+    const icon = document.getElementById('bgmIcon');
+    const btn = document.getElementById('bgmBtn');
+
+    if (!audio) return;
+
+    if (isBGMPlaying) {
+        audio.pause();
+        icon.setAttribute('data-lucide', 'play');
+        btn.classList.remove('bg-gradient-to-br', 'from-pink-500', 'to-rose-600');
+        btn.classList.add('bg-gradient-to-br', 'from-rose-400', 'to-pink-500');
+    } else {
+        audio.play();
+        icon.setAttribute('data-lucide', 'pause');
+        btn.classList.remove('bg-gradient-to-br', 'from-rose-400', 'to-pink-500');
+        btn.classList.add('bg-gradient-to-br', 'from-pink-500', 'to-rose-600');
+    }
+
+    isBGMPlaying = !isBGMPlaying;
+    lucide.createIcons();
+}
+
+function setBGMVolume(value) {
+    const audio = document.getElementById('bgmAudio');
+    if (audio) audio.volume = value / 100;
+}
+
+// ==========================================
+// 🎮 파우치 머지 게임 (DECO Tab)
+// ==========================================
+
+// Matter.js 모듈
+const { Engine, Render, Runner, Bodies, Body, World, Events, Composite } = typeof Matter !== 'undefined' ? Matter : {};
+
+// 게임 상태
+let mergeEngine = null;
+let mergeRender = null;
+let mergeRunner = null;
+let mergeScore = 0;
+let nextItemLevel = 1;
+let isGameOver = false;
+let canDrop = true;
+let gameItems = [];
+
+// 아이템 레벨 설정 (radius = 물리 충돌 반경, size = 스프라이트 크기)
+const ITEM_LEVELS = [
+    { level: 1, radius: 20, size: 40, image: 'assets/level1.png', score: 10 },
+    { level: 2, radius: 25, size: 50, image: 'assets/level2.png', score: 20 },
+    { level: 3, radius: 30, size: 60, image: 'assets/level3.png', score: 40 },
+    { level: 4, radius: 38, size: 76, image: 'assets/level4.png', score: 80 },
+    { level: 5, radius: 48, size: 96, image: 'assets/level5.png', score: 160 },
+    { level: 6, radius: 60, size: 120, image: 'assets/level6.png', score: 320 }
+];
+
+// 게임 캔버스 크기
+const GAME_WIDTH = 500;
+const GAME_HEIGHT = 600;
+const ZIPPER_HEIGHT = 40;
+
+// 🎮 머지 게임 초기화
+function initMergeGame() {
+    const container = document.getElementById('gameContainer');
+    const canvas = document.getElementById('mergeCanvas');
+    if (!container || !canvas || typeof Matter === 'undefined') return;
+
+    // 엔진 생성
+    mergeEngine = Engine.create();
+    mergeEngine.world.gravity.y = 0.8;
+
+    // 렌더러 생성
+    mergeRender = Render.create({
+        canvas: canvas,
+        engine: mergeEngine,
+        options: {
+            width: GAME_WIDTH,
+            height: GAME_HEIGHT,
+            wireframes: false,
+            background: 'transparent'
+        }
+    });
+
+    // 벽 생성
+    createPouchWalls();
+
+    // 클릭/터치 이벤트
+    canvas.addEventListener('click', handleGameClick);
+    canvas.addEventListener('touchstart', handleGameTouch, { passive: false });
+
+    // 충돌 감지
+    Events.on(mergeEngine, 'collisionStart', handleCollision);
+
+    // 게임 루프
+    mergeRunner = Runner.create();
+    Runner.run(mergeRunner, mergeEngine);
+    Render.run(mergeRender);
+
+    // 게임 오버 체크
+    setInterval(checkGameOver, 500);
+    updateNextPreview();
+}
+
+// 🧱 파우치 벽 생성
+function createPouchWalls() {
+    const wallOptions = { isStatic: true, render: { visible: false } };
+    const floor = Bodies.rectangle(GAME_WIDTH / 2, GAME_HEIGHT + 30, GAME_WIDTH + 100, 100, wallOptions);
+    const leftWall = Bodies.rectangle(-25, GAME_HEIGHT / 2, 50, GAME_HEIGHT, wallOptions);
+    const rightWall = Bodies.rectangle(GAME_WIDTH + 25, GAME_HEIGHT / 2, 50, GAME_HEIGHT, wallOptions);
+    const bottomLeft = Bodies.circle(30, GAME_HEIGHT - 30, 40, wallOptions);
+    const bottomRight = Bodies.circle(GAME_WIDTH - 30, GAME_HEIGHT - 30, 40, wallOptions);
+    World.add(mergeEngine.world, [floor, leftWall, rightWall, bottomLeft, bottomRight]);
+}
+
+// 🖱️ 클릭 처리
+function handleGameClick(e) {
+    if (isGameOver || !canDrop) return;
+    const rect = e.target.getBoundingClientRect();
+    const x = Math.max(40, Math.min(GAME_WIDTH - 40, e.clientX - rect.left));
+    dropItem(x);
+}
+
+// 📱 터치 처리
+function handleGameTouch(e) {
+    e.preventDefault();
+    if (isGameOver || !canDrop) return;
+    const rect = e.target.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = Math.max(40, Math.min(GAME_WIDTH - 40, touch.clientX - rect.left));
+    dropItem(x);
+}
+
+// ⬇️ 아이템 떨어뜨리기
+function dropItem(x) {
+    canDrop = false;
+    const levelData = ITEM_LEVELS[nextItemLevel - 1];
+    const item = Bodies.circle(x, ZIPPER_HEIGHT + 20, levelData.radius, {
+        label: `item_${nextItemLevel}`,
+        restitution: 0.3,
+        friction: 0.5,
+        render: {
+            sprite: {
+                texture: levelData.image,
+                xScale: levelData.size / 500,
+                yScale: levelData.size / 500
+            }
+        }
+    });
+    item.itemLevel = nextItemLevel;
+    gameItems.push(item);
+    World.add(mergeEngine.world, item);
+    nextItemLevel = Math.floor(Math.random() * 3) + 1;
+    updateNextPreview();
+    setTimeout(() => { canDrop = true; }, 500);
+}
+
+// 💥 충돌 처리
+function handleCollision(event) {
+    event.pairs.forEach(pair => {
+        const { bodyA, bodyB } = pair;
+        if (bodyA.itemLevel && bodyB.itemLevel && bodyA.itemLevel === bodyB.itemLevel) {
+            const level = bodyA.itemLevel;
+            if (level >= 6) return;
+
+            const midX = (bodyA.position.x + bodyB.position.x) / 2;
+            const midY = (bodyA.position.y + bodyB.position.y) / 2;
+
+            World.remove(mergeEngine.world, bodyA);
+            World.remove(mergeEngine.world, bodyB);
+            gameItems = gameItems.filter(i => i !== bodyA && i !== bodyB);
+
+            const newLevel = level + 1;
+            const newLevelData = ITEM_LEVELS[newLevel - 1];
+            const newItem = Bodies.circle(midX, midY, newLevelData.radius, {
+                label: `item_${newLevel}`,
+                restitution: 0.3,
+                friction: 0.5,
+                render: {
+                    sprite: {
+                        texture: newLevelData.image,
+                        xScale: newLevelData.size / 500,
+                        yScale: newLevelData.size / 500
+                    }
+                }
+            });
+            newItem.itemLevel = newLevel;
+            gameItems.push(newItem);
+            World.add(mergeEngine.world, newItem);
+
+            mergeScore += newLevelData.score;
+            updateScoreDisplay();
+            createSparkle(midX, midY);
+            playPopSound();
+        }
+    });
+}
+
+// ✨ 반짝이 효과
+function createSparkle(x, y) {
+    const container = document.getElementById('gameContainer');
+    if (!container) return;
+    for (let i = 0; i < 6; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'absolute w-2 h-2 bg-yellow-300 rounded-full pointer-events-none z-40';
+        sparkle.style.cssText = `left:${x}px;top:${y}px;transform:translate(-50%,-50%);opacity:1;`;
+        container.appendChild(sparkle);
+        const angle = (i / 6) * Math.PI * 2;
+        const dist = 30;
+        sparkle.animate([
+            { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+            { transform: `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px)) scale(0)`, opacity: 0 }
+        ], { duration: 400, easing: 'ease-out' });
+        setTimeout(() => sparkle.remove(), 400);
+    }
+}
+
+// 🔊 팝 사운드
+function playPopSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 600;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+    } catch (e) { }
+}
+
+// 📊 점수 업데이트
+function updateScoreDisplay() {
+    const el = document.getElementById('mergeScore');
+    if (el) el.textContent = mergeScore;
+}
+
+// 🔮 다음 아이템 미리보기
+function updateNextPreview() {
+    const img = document.getElementById('nextItemImg');
+    if (img && ITEM_LEVELS[nextItemLevel - 1]) {
+        img.src = ITEM_LEVELS[nextItemLevel - 1].image;
+    }
+}
+
+// ❌ 게임 오버 체크
+function checkGameOver() {
+    if (isGameOver) return;
+    for (const item of gameItems) {
+        const r = ITEM_LEVELS[item.itemLevel - 1]?.radius || 20;
+        if (item.position.y - r < ZIPPER_HEIGHT && Math.abs(item.velocity.y) < 0.5) {
+            triggerGameOver();
+            break;
+        }
+    }
+}
+
+// 💀 게임 오버
+function triggerGameOver() {
+    isGameOver = true;
+    const overlay = document.getElementById('gameOverOverlay');
+    const finalScore = document.getElementById('finalScore');
+    if (overlay) overlay.classList.remove('hidden');
+    if (finalScore) finalScore.textContent = mergeScore;
+    if (mergeRunner) Runner.stop(mergeRunner);
+}
+
+// 🔄 게임 재시작
+function restartMergeGame() {
+    gameItems.forEach(item => World.remove(mergeEngine.world, item));
+    gameItems = [];
+    mergeScore = 0;
+    nextItemLevel = 1;
+    isGameOver = false;
+    canDrop = true;
+    updateScoreDisplay();
+    updateNextPreview();
+    const overlay = document.getElementById('gameOverOverlay');
+    if (overlay) overlay.classList.add('hidden');
+    if (mergeRunner) Runner.run(mergeRunner, mergeEngine);
+}
 
